@@ -1,0 +1,214 @@
+@import "tailwindcss";
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes zoom-in-95 {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes slide-in-from-top-2 {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(210 40% 8%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(210 40% 8%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(210 40% 8%);
+  --primary: hsl(210 100% 45%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(210 40% 96%);
+  --secondary-foreground: hsl(210 40% 8%);
+  --muted: hsl(210 40% 96%);
+  --muted-foreground: hsl(210 40% 45%);
+  --accent: hsl(210 40% 96%);
+  --accent-foreground: hsl(210 40% 8%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 98%);
+  --border: hsl(210 40% 92%);
+  --input: hsl(210 40% 96%);
+  --ring: hsl(210 100% 45%);
+  --radius: 0.5rem;
+  --navy: #003169;
+  --navy-dark: #101517;
+  --ink: #1A1B25;
+  --slate: #6B7280;
+  --gray-700: #374151;
+  --mist: #E5E7EB;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-navy: var(--navy);
+  --color-navy-dark: var(--navy-dark);
+  --color-mist: var(--mist);
+  --color-slate: var(--slate);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-inter);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, rgba(0, 115, 230, 0.08) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.service-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--ink);
+}
+
+.prose p {
+  margin-bottom: 1.25rem;
+  line-height: 1.75;
+  color: var(--gray-700);
+}
+
+.prose a {
+  color: hsl(210 100% 45%);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  color: hsl(210 100% 35%);
+}
+
+.prose ul, .prose ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.5rem;
+  line-height: 1.75;
+  color: var(--gray-700);
+}
+
+.prose blockquote {
+  border-left: 3px solid hsl(210 100% 45%);
+  padding: 0.75rem 1rem;
+  background: hsl(210 40% 96%);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 1.25rem;
+  font-style: italic;
+  color: var(--slate);
+}
+
+.prose code {
+  background: var(--mist);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background: var(--navy-dark);
+  color: #e5e7eb;
+  padding: 1.25rem;
+  border-radius: 12px;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.prose img {
+  border-radius: 12px;
+  margin: 1.5rem 0;
+}
+
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--mist);
+  margin: 2.5rem 0;
+}

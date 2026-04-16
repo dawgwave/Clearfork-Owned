@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <circle cx="24" cy="14" r="4" fill="#8BC53F"/>
+  <circle cx="14" cy="20" r="4" fill="#8BC53F"/>
+  <circle cx="34" cy="20" r="4" fill="#8BC53F"/>
+  <circle cx="18" cy="30" r="4" fill="#8BC53F"/>
+  <circle cx="30" cy="30" r="4" fill="#8BC53F"/>
+  <circle cx="24" cy="22" r="3" fill="#8BC53F"/>
+  <text x="24" y="46" text-anchor="middle" font-family="Inter, sans-serif" font-size="7" font-weight="700" fill="#101517">SIG</text>
+</svg>
