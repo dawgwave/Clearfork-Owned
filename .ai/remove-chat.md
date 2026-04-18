@@ -1,0 +1,1 @@
+remove chat bot and all associated frontend and backend code, config, docs, etc.

@@ -54,7 +54,6 @@ clearfork-insurance/
   src/components/                 # Shared components
     header.tsx                    # Sticky header + mobile nav + dropdowns
     footer.tsx                    # 4-column footer, social links
-    chatbot.tsx                   # "Clearbot" floating chat (Starfish agent)
     hero-section.tsx              # Full-width hero with CTAs
     services-section.tsx          # Embla carousel of 6 service cards
     about-section.tsx             # Company intro with team photo
@@ -84,7 +83,6 @@ clearfork-insurance/
 ## Key Features
 
 - **AI Quote Assistant**: Gemini 2.0 Flash-powered form filling via `/api/quote-assistant`
-- **Clearbot Chatbot**: Floating chat widget calling Starfish agent (Supabase Edge Function)
 - **reCAPTCHA v3**: Loaded in layout, tokens generated on both quote and contact forms
 - **Quote Submission**: 23-field form with Zod validation, submitted to NocoDB
 - **Document Upload**: PDF/image extraction via Gemini for auto-filling quote fields
@@ -131,7 +129,7 @@ gcloud run deploy clearfork-insurance \
 
 - **GCP Project**: ludata-prod
 - **Cloud Run**: clearfork-insurance (us-central1)
-- **Load Balancer**: starfish-url-map (shared with starfishhealth.app)
+- **Load Balancer**: clearfork-url-map
 - **LB IP**: 34.36.4.221
 - **SSL**: Google-managed cert for clearforkinsurance.com + www
 - **CDN**: Cloud CDN enabled on backend service
@@ -140,7 +138,6 @@ gcloud run deploy clearfork-insurance \
 ## External Services
 
 - **NocoDB**: `data.levelingupdata.com` — quote submission storage
-- **Starfish Agent**: `umesyaxnkvnpnyhvcopy.supabase.co` — chatbot knowledge base
 - **Google reCAPTCHA v3**: Form spam protection
 - **Google Analytics 4**: Site analytics
 

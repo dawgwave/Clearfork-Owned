@@ -4,7 +4,6 @@ import Script from "next/script";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Chatbot } from "@/components/chatbot";
 import { Toaster } from "@/components/ui/toaster";
 import { insuranceAgencySchema } from "@/lib/schema";
 
@@ -98,7 +97,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <main className="flex-1">{children}</main>
         <Footer />
         <Toaster />
-        <Chatbot />
         {RECAPTCHA_SITE_KEY && (
           <Script
             src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}

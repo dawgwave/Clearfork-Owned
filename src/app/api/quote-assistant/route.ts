@@ -8,9 +8,6 @@ import {
   quoteFormSchema,
 } from "@/lib/quote-types";
 
-const STARFISH_AGENT_URL =
-  process.env.STARFISH_AGENT_URL ??
-  "https://umesyaxnkvnpnyhvcopy.supabase.co/functions/v1/starfish-agent";
 
 const QUOTE_KEYS = quoteFormSchema.keyof().options;
 
@@ -79,53 +76,8 @@ export async function POST(req: NextRequest) {
     const currentForm = (body.currentForm ?? {}) as Partial<QuoteFormValues>;
 
     if (body.isQuestion) {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        accept: "application/json",
-      };
-      const bearer = process.env.STARFISH_AGENT_TOKEN ?? process.env.SUPABASE_ANON_KEY;
-      if (bearer) {
-        headers.Authorization = `Bearer ${bearer}`;
-      }
-
-      const starfishRes = await fetch(STARFISH_AGENT_URL, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          user: userMessage,
-          currentForm,
-          pending: body.pending,
-          isQuestion: true,
-        }),
-      });
-
-      const starfishText = await starfishRes.text();
-      let starfishData: unknown;
-      try {
-        starfishData = JSON.parse(starfishText) as unknown;
-      } catch {
-        starfishData = { reply: starfishText };
-      }
-
-      if (!starfishRes.ok) {
-        console.error("[quote-assistant] Starfish agent error:", starfishRes.status, starfishText);
-        return NextResponse.json(
-          {
-            reply: "Sorry, I could not reach the assistant. Please try again.",
-            updates: {},
-            completed: false,
-            submit: false,
-          },
-          { status: 200 },
-        );
-      }
-
-      if (starfishData && typeof starfishData === "object" && "reply" in starfishData) {
-        return NextResponse.json(starfishData);
-      }
-
       return NextResponse.json({
-        reply: typeof starfishData === "string" ? starfishData : starfishText,
+        reply: "I can help you fill out the quote form. Please provide information about your insurance needs, and I'll assist you in completing the form fields.",
         updates: {},
         completed: false,
         submit: false,
