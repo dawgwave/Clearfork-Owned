@@ -1,0 +1,1 @@
+- auto import blogs added to docs folder. this functionality should already work under gcp, but that is not 100% sure fact. what we want is to rewrite this functionality without using gcp, nocodb, nor chatbot

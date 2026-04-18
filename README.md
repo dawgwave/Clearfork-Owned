@@ -109,7 +109,7 @@ npx next start       # http://localhost:3000
 | **GCP Project** | `ludata-prod` |
 | **Cloud Run Service** | `clearfork-insurance` (us-central1) |
 | **Cloud Build Trigger** | `clearfork-insurance-deploy` — auto-deploys on push to `main` |
-| **Load Balancer** | `starfish-url-map` (shared with starfishhealth.app) |
+| **Load Balancer** | `clearfork-url-map` |
 | **Static IP** | `34.36.4.221` |
 | **SSL** | Google-managed cert for `clearforkinsurance.com` + `www` |
 | **CDN** | Cloud CDN enabled on backend service |
@@ -141,7 +141,6 @@ gcloud run services update clearfork-insurance \
 | Service | URL / Host | Purpose |
 |---|---|---|
 | **NocoDB** | `data.levelingupdata.com` | Quote submission storage |
-| **Starfish Agent** | `umesyaxnkvnpnyhvcopy.supabase.co` | Chatbot knowledge base (Supabase Edge Function) |
 | **Google reCAPTCHA v3** | — | Form spam protection |
 | **Google Analytics 4** | — | Site analytics |
 | **Google Search Console** | — | SEO monitoring |
