@@ -1,4 +1,7 @@
-- adapt to run on real database (mysql) instead of nocodb (or explore setting up a new nocodb instance)
+- adapt to run on mysql database  instead of nocodb 
+
+database name: clearfork-insurance
+
 
 pages:
 
