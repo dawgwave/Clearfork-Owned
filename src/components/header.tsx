@@ -9,7 +9,8 @@ import { PageShell } from "@/components/page-shell";
 import { cn } from "@/lib/utils";
 
 const INSURANCE_LINKS = [
-  { label: "Home/Auto", href: "/home-auto-insurance" },
+  { label: "Home/Auto/Umbrella", href: "/home-auto-insurance" },
+  { label: "Boat/RV/ATV/Motorcycle", href: "/recreational-vehicle-insurance" },
   { label: "Commercial", href: "/commercial-insurance" },
   { label: "Life", href: "/life-insurance" },
   { label: "Performance and Bid Bonds", href: "/bonds" },
@@ -21,6 +22,12 @@ const ABOUT_LINKS = [
   { label: "Meet Our Team", href: "/about" },
 ] as const;
 
+const CONTENT_LINKS = [
+  { label: "Blog", href: "/blog" },
+  { label: "Vlog", href: "/videos" },
+  { label: "Podcast", href: "/podcast" },
+] as const;
+
 export function Header() {
   const pathname = usePathname();
   const isBlogPost = /^\/blog\/.+/.test(pathname ?? "");
@@ -28,8 +35,10 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [contentOpen, setContentOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
+  const [mobileContentOpen, setMobileContentOpen] = useState(false);
 
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -45,6 +54,7 @@ export function Header() {
     closeTimer.current = setTimeout(() => {
       setServicesOpen(false);
       setAboutOpen(false);
+      setContentOpen(false);
     }, 120);
   }, [clearCloseTimer]);
 
@@ -171,9 +181,48 @@ export function Header() {
             )}
           </div>
 
-          <Link href="/blog" className={navLinkClass}>
-            Blog
-          </Link>
+          <div className="relative">
+            <button
+              onMouseEnter={() => {
+                clearCloseTimer();
+                setContentOpen(true);
+              }}
+              onMouseLeave={scheduleClose}
+              className={cn(
+                navLinkClass,
+                "flex items-center gap-1",
+                contentOpen && "text-primary",
+              )}
+            >
+              Content
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform",
+                  contentOpen && "rotate-180",
+                )}
+              />
+            </button>
+
+            {contentOpen && (
+              <div
+                onMouseEnter={clearCloseTimer}
+                onMouseLeave={scheduleClose}
+                className="absolute left-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover shadow-lg"
+              >
+                <div className="py-1">
+                  {CONTENT_LINKS.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="hidden items-center gap-4 lg:flex">
@@ -285,9 +334,34 @@ export function Header() {
               )}
             </div>
 
-            <Link href="/blog" className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
-              Blog
-            </Link>
+            <div>
+              <button
+                className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-medium hover:bg-muted"
+                aria-expanded={mobileContentOpen}
+                onClick={() => setMobileContentOpen((v) => !v)}
+              >
+                Content
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    mobileContentOpen && "rotate-180",
+                  )}
+                />
+              </button>
+              {mobileContentOpen && (
+                <div className="ml-2 flex flex-col border-l border-border pl-3">
+                  {CONTENT_LINKS.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      className="py-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {isBlogPost ? (
               <Link

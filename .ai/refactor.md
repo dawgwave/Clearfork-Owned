@@ -10,12 +10,7 @@
         not sure it would still work fine on production though.
 
 2. functionality:
-    a. .ai/auto-import-blogs.md
-    b. how does admin get notified of quote requests?
+    a. .ai/cosmetic-changes.md
+    b. .ai/auto-import-blogs.md
+    c. how does admin get notified of quote requests?
     
-3. pages (this section is repeated in the markdown files referenced above):
-
-- get quote form with attachments - we want to port this functionality as is
-- vlogs (youtube links) - we want to port this functionality as is
-- podcasts (youtube links) - we want to port this functionality as is
-- blogs (text) - we want to port this functionality as is

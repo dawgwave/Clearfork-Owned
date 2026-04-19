@@ -12,7 +12,8 @@ import { PageShell } from "@/components/page-shell";
 import { GOOGLE_MAPS_PLACE_URL } from "@/lib/schema";
 
 const SERVICES = [
-  { label: "Home/Auto Insurance", href: "/home-auto-insurance" },
+  { label: "Home/Auto/Umbrella Insurance", href: "/home-auto-insurance" },
+  { label: "Boat/RV/ATV/Motorcycle Insurance", href: "/recreational-vehicle-insurance" },
   { label: "Commercial Insurance", href: "/commercial-insurance" },
   { label: "Life Insurance", href: "/life-insurance" },
   { label: "Performance and Bid Bonds", href: "/bonds" },
@@ -48,7 +49,7 @@ const SOCIAL = [
   },
   {
     label: "YouTube",
-    href: "https://www.youtube.com",
+    href: "https://www.youtube.com/@TheInsuranceBlackbox",
     icon: FaYoutube,
   },
 ];
@@ -176,8 +177,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-white/15 pt-8 text-xs text-white/60 sm:flex-row sm:text-sm">
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
+        <div className="mt-12 flex flex-col items-center justify-center gap-4 border-t border-white/15 pt-8 text-xs text-white/60 sm:text-sm">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href="/privacy" className="transition-colors hover:text-white">
               Privacy Policy
             </Link>
@@ -186,14 +187,6 @@ export function Footer() {
             </span>
             <span>&copy; {year} Clearfork Insurance Agency. All rights reserved.</span>
           </div>
-          <a
-            href="https://levelingupdata.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="transition-colors hover:text-white"
-          >
-            Powered by Leveling Up Data
-          </a>
         </div>
       </PageShell>
     </footer>

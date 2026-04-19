@@ -141,7 +141,9 @@ export default function ContentHubSection() {
         <div className="grid gap-12 lg:grid-cols-3 lg:gap-8">
           {/* Blog */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--navy)]">Blog</h2>
+            <Link href="/blog">
+              <h2 className="text-2xl font-bold text-[var(--navy)] hover:text-primary transition-colors cursor-pointer">Blog</h2>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">
               Insights and practical guidance from our team.
             </p>
@@ -207,7 +209,9 @@ export default function ContentHubSection() {
 
           {/* Video */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--navy)]">Video</h2>
+            <Link href="/videos">
+              <h2 className="text-2xl font-bold text-[var(--navy)] hover:text-primary transition-colors cursor-pointer">Vlog</h2>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">
               Short explainers on coverage and planning.
             </p>
@@ -278,7 +282,9 @@ export default function ContentHubSection() {
 
           {/* Podcast */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--navy)]">Podcast</h2>
+            <Link href="/podcast">
+              <h2 className="text-2xl font-bold text-[var(--navy)] hover:text-primary transition-colors cursor-pointer">Podcast</h2>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">
               Conversations on risk, protection, and peace of mind.
             </p>
