@@ -187,7 +187,7 @@ export function BlogPostView({ post }: BlogPostViewProps) {
 
             {/* Content */}
             <div className="prose prose-lg max-w-none mb-12">
-              <BlogPostMarkdown content={post.content} />
+              <BlogPostMarkdown markdown={post.content} />
             </div>
 
             {/* Tags */}

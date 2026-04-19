@@ -8,7 +8,8 @@
         Do we need them?
         quote form submission seems to work locally, 
         not sure it would still work fine on production though.
-    f. migrate from google cloud to digital ocean - create deployment script
+    f. (done) migrate from google cloud to digital ocean
+       i. I can connect to droplet via web console. not sure if I have ssh keys set up locally to be able to ssh into the droplet from my terminal. How do you suggest we handle deployment?
 
 2. functionality:
     a. (done) .ai/cosmetic-changes.md 

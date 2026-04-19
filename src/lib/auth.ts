@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { query, getConnection } from './database';
 
 // Types
@@ -35,6 +35,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 const BCRYPT_ROUNDS = 12;
 
+if (!JWT_SECRET || JWT_SECRET === 'your-secret-key-change-in-production') {
+  console.warn('Warning: Using default JWT_SECRET. Please set a secure JWT_SECRET in production.');
+}
+
 /**
  * Hash password using bcrypt
  */
@@ -53,7 +57,10 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
  * Generate JWT token
  */
 export function generateToken(payload: object): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
 }
 
 /**
@@ -61,7 +68,10 @@ export function generateToken(payload: object): string {
  */
 export function verifyToken(token: string): any {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    if (!JWT_SECRET) {
+      throw new Error('JWT_SECRET is not configured');
+    }
+    return jwt.verify(token, JWT_SECRET as string);
   } catch (error) {
     return null;
   }

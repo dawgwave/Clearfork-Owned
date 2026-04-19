@@ -10,7 +10,7 @@ WORKDIR /app
 ARG NEXT_PUBLIC_GA_ID
 ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install --no-audit --no-fund --ignore-scripts
 COPY . .
 RUN npm run build
 
