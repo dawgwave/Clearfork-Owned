@@ -188,7 +188,8 @@ export async function getUserWithRoles(userId: number): Promise<UserWithRoles> {
 
   // Get roles
   const roles = await query<Role>(
-    `SELECT r.id, r.name, r.description, r.permissions 
+    `SELECT r.id, r.name, r.description, 
+            COALESCE(r.permissions, '{}') as permissions
      FROM roles r 
      INNER JOIN user_roles ur ON r.id = ur.role_id 
      WHERE ur.user_id = ?`,

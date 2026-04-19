@@ -114,11 +114,13 @@ volumes:
   mysql_data:
 EOF
     
-    # Copy environment file
-    log "Transferring environment configuration..."
-    if [[ -f ".env.production" ]]; then
-        scp ".env.production" "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/.env.production"
-    else
+    # Copy environment file (only if it doesn't exist on server)
+    log "Checking environment configuration..."
+    if ! ssh "$DROPLET_USER@$DROPLET_IP" "test -f $REMOTE_DIR/.env.production"; then
+        log "Transferring environment configuration..."
+        if [[ -f ".env.production" ]]; then
+            scp ".env.production" "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/.env.production"
+        else
         warn ".env.production not found. Creating template..."
         ssh "$DROPLET_USER@$DROPLET_IP" "cat > $REMOTE_DIR/.env.production" << 'EOF'
 # Production Environment Variables
@@ -138,7 +140,10 @@ JWT_SECRET=
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=
 RECAPTCHA_SECRET_KEY=
 EOF
-        warn "Please update $REMOTE_DIR/.env.production with your actual values"
+            warn "Please update $REMOTE_DIR/.env.production with your actual values"
+        fi
+    else
+        log "Production environment file already exists on server - not overwriting"
     fi
     
     # Start services
@@ -180,9 +185,13 @@ deploy_direct() {
         --exclude 'uploads' \
         ./ "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/" || error "File sync failed"
     
-    # Copy environment file
-    if [[ -f ".env.production" ]]; then
-        scp ".env.production" "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/.env.production"
+    # Copy environment file (only if it doesn't exist on server)
+    if ! ssh "$DROPLET_USER@$DROPLET_IP" "test -f $REMOTE_DIR/.env.production"; then
+        if [[ -f ".env.production" ]]; then
+            scp ".env.production" "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/.env.production"
+        fi
+    else
+        log "Production environment file already exists on server - not overwriting"
     fi
     
     # Install dependencies and build on remote
