@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { X, Bot, Send, Upload, Loader2, CircleHelp } from "lucide-react";
+import { X, Bot, Send, Upload, Loader2, CircleHelp, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { AnimatedBotLogo } from "@/components/animated-bot-logo";
 import {
   QuoteAssistantProvider,
   type QuoteAssistantContextType,
@@ -746,7 +745,7 @@ export const QuoteAssistantModal = forwardRef<
           className="fixed bottom-6 right-6 z-[999] flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Open Quote Assistant"
         >
-          <AnimatedBotLogo />
+          <MessageSquare className="h-7 w-7" />
         </button>
       </QuoteAssistantProvider>
     );

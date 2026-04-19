@@ -2,10 +2,10 @@
 
     a. create .env.local file for local running and debugging
     b. .ai/remove-chat.md
-    c. .ai/gcp-vs-digiocean.mdmysql db. create a script to create a local database for debugging.
+    c. run app locally.
     d. .ai/nocodb-to-mysql.md after this step is implemented, I need a way to run the app locally with db from step c.
     e. get google gemini account credentials.
-    f. run app locally.
+    f. .ai/gcp-vs-digiocean.mdmysql db. create a script to create a local database for debugging.
 
 2. functionality:
     a. .ai/auto-import-blogs.md
