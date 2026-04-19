@@ -3,16 +3,26 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Link2 } from "lucide-react";
+import { Link2, ArrowLeft } from "lucide-react";
 import { FaFacebook, FaLinkedin, FaXTwitter } from "react-icons/fa6";
 import { PageShell } from "@/components/page-shell";
 import { BlogPostMarkdown } from "@/components/blog/blog-post-markdown";
-import {
-  getPostBySlug,
-  getPopularPosts,
-  getPrevNextSlugs,
-  type BlogPostDetail,
-} from "@/data/blog-posts";
+
+interface BlogPost {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt?: string;
+  content: string;
+  category?: string;
+  tags: string[];
+  featured_image_url?: string;
+  is_published: boolean;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+  author_name?: string;
+}
 
 function ShareIcons({ url, title }: { url: string; title: string }) {
   const encoded = encodeURIComponent(url);
@@ -49,7 +59,12 @@ function ShareIcons({ url, title }: { url: string; title: string }) {
       <button
         type="button"
         onClick={() => {
-          void navigator.clipboard.writeText(url);
+          if (navigator.share) {
+            navigator.share({ title, url });
+          } else {
+            navigator.clipboard.writeText(url);
+            // Could add a toast notification here
+          }
         }}
         className="p-1.5 text-[#6B7280] hover:text-[#0A0A0A]"
         aria-label="Copy link"
@@ -60,161 +75,188 @@ function ShareIcons({ url, title }: { url: string; title: string }) {
   );
 }
 
-function PopularPostCard({ post }: { post: BlogPostDetail }) {
-  return (
-    <Link href={`/blog/${post.slug}`} className="group block">
-      <article className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] transition-colors hover:bg-[#F3F4F6]">
-        <div className="relative h-40 overflow-hidden">
-          <Image src={post.imageSrc} alt="" fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="(max-width: 1024px) 50vw, 25vw" />
-        </div>
-        <div className="flex flex-1 flex-col p-4">
-          <h3 className="line-clamp-2 text-sm font-semibold text-[#0A0A0A] transition-colors group-hover:text-primary">
-            {post.title}
-          </h3>
-          <p className="mt-2 line-clamp-2 text-xs text-[#6B7280]">{post.excerpt}</p>
-          <span className="mt-3 text-sm font-medium text-primary group-hover:underline">Read More</span>
-        </div>
-      </article>
-    </Link>
-  );
+interface BlogPostViewProps {
+  post: BlogPost;
 }
 
-export function BlogPostView({ slug }: { slug: string }) {
-  const post = getPostBySlug(slug);
-  const { prev, next } = getPrevNextSlugs(slug);
-  const popularPosts = getPopularPosts(slug, 4);
-  const prevPost = prev ? getPostBySlug(prev) : null;
-  const nextPost = next ? getPostBySlug(next) : null;
-  const [shareUrl, setShareUrl] = useState("");
+export function BlogPostView({ post }: BlogPostViewProps) {
+  const [url, setUrl] = useState("");
+  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
 
   useEffect(() => {
-    setShareUrl(typeof window !== "undefined" ? window.location.href : "");
-  }, [slug]);
+    setUrl(window.location.href);
+    
+    // Fetch related posts (same category or tags)
+    const fetchRelatedPosts = async () => {
+      try {
+        const params = new URLSearchParams({
+          limit: '4',
+        });
+        
+        if (post.category) {
+          params.append('category', post.category);
+        }
+        
+        const response = await fetch(`/api/blogs?${params}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          // Filter out current post and limit to 3
+          const filtered = data.posts
+            .filter((p: BlogPost) => p.id !== post.id)
+            .slice(0, 3);
+          setRelatedPosts(filtered);
+        }
+      } catch (error) {
+        console.error('Failed to fetch related posts:', error);
+      }
+    };
+    
+    fetchRelatedPosts();
+  }, [post.id, post.category]);
 
-  if (!post) {
-    return null;
-  }
+  const publishedDate = post.published_at 
+    ? new Date(post.published_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    : new Date(post.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
 
   return (
-    <article className="bg-white">
-      <header className="relative w-full">
-        <div className="relative h-[320px] w-full sm:h-[400px] lg:h-[480px]">
-          <Image src={post.imageSrc} alt="" fill className="object-cover" priority sizes="100vw" />
-        </div>
-      </header>
-
-      <div className="py-10 lg:py-16">
-        <PageShell className="px-4 sm:px-6 lg:px-[148px]">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="text-3xl font-bold leading-tight text-[#0A0A0A] sm:text-4xl lg:text-[42px]">
-              {post.title}
-            </h1>
-
-            <div className="mt-6 flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-[#E5E7EB]">
-                  <Image src={post.imageSrc} alt="" fill className="object-cover" sizes="48px" />
-                </div>
-                <div>
-                  <span className="text-sm text-[#374151]">By {post.author}</span>
-                  <time className="block text-sm text-[#6B7280]" dateTime={post.date}>
-                    {post.date}
-                  </time>
-                </div>
+    <div className="min-h-screen bg-white">
+      <PageShell>
+        {/* Header */}
+        <div className="py-8">
+          <Link 
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm text-[#6B7280] hover:text-[#0A0A0A] mb-8"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Blog
+          </Link>
+          
+          <article>
+            {/* Title and Meta */}
+            <header className="mb-8">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <time className="text-sm text-[#6B7280]" dateTime={post.published_at || post.created_at}>
+                  {publishedDate}
+                </time>
+                {post.category && (
+                  <span className="rounded bg-[#F3F4F6] px-2.5 py-1 text-xs font-medium text-[#4B5162]">
+                    {post.category}
+                  </span>
+                )}
               </div>
-              <div className="ml-auto">
-                <ShareIcons url={shareUrl} title={post.title} />
-              </div>
-            </div>
-
-            <div className="mt-10 text-[#374151]">
-              {post.bodyFormat === "markdown" ? (
-                <BlogPostMarkdown markdown={post.body} />
-              ) : (
-                post.body.split("\n\n").map((paragraph, i) => (
-                  <p key={i} className="mb-5 text-[16px] leading-[28px]">
-                    {paragraph}
-                  </p>
-                ))
+              
+              <h1 className="text-4xl font-bold leading-tight text-[#0A0A0A] sm:text-5xl mb-4">
+                {post.title}
+              </h1>
+              
+              {post.excerpt && (
+                <p className="text-xl leading-relaxed text-[#6B7280] mb-6">
+                  {post.excerpt}
+                </p>
               )}
-            </div>
+              
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <p className="text-sm text-[#6B7280]">
+                  By {post.author_name || 'Clearfork Insurance'}
+                </p>
+                <ShareIcons url={url} title={post.title} />
+              </div>
+            </header>
 
-            {post.quote ? (
-              <blockquote className="my-10 border-l-4 border-primary py-2 pl-6">
-                <p className="text-[16px] italic leading-[28px] text-[#374151]">{post.quote}</p>
-              </blockquote>
-            ) : null}
-
-            {post.inlineImageSrc ? (
-              <div className="my-10 overflow-hidden rounded-xl">
+            {/* Featured Image */}
+            {post.featured_image_url && (
+              <div className="mb-8">
                 <Image
-                  src={post.inlineImageSrc}
-                  alt=""
-                  width={1200}
-                  height={675}
-                  className="h-auto w-full object-cover"
+                  src={post.featured_image_url}
+                  alt={post.title}
+                  width={800}
+                  height={400}
+                  className="w-full rounded-2xl object-cover"
                 />
               </div>
-            ) : null}
+            )}
 
-            {post.bulletSections?.map((section, i) => (
-              <div key={i} className="my-10">
-                <div className="mb-3 flex items-start gap-2">
-                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-sm bg-[#ef4444]" />
-                  <h3 className="text-lg font-semibold text-[#0A0A0A]">{section.title}</h3>
-                </div>
-                <ul className="space-y-2 pl-4">
-                  {section.items.map((item, j) => (
-                    <li
-                      key={j}
-                      className="flex items-start gap-2 text-[15px] leading-[26px] text-[#374151]"
+            {/* Content */}
+            <div className="prose prose-lg max-w-none mb-12">
+              <BlogPostMarkdown content={post.content} />
+            </div>
+
+            {/* Tags */}
+            {post.tags.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-sm font-medium text-[#0A0A0A] mb-3">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {post.tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/blog?tag=${encodeURIComponent(tag)}`}
+                      className="rounded bg-[#F3F4F6] px-3 py-1.5 text-sm text-[#4B5162] hover:bg-[#E5E7EB] hover:text-[#0A0A0A]"
                     >
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-sm bg-[#ef4444]" />
-                      <span>{item}</span>
-                    </li>
+                      #{tag}
+                    </Link>
                   ))}
-                </ul>
+                </div>
               </div>
-            ))}
+            )}
 
-            <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E7EB] pt-10">
-              {prevPost ? (
-                <Link
-                  href={`/blog/${prevPost.slug}`}
-                  className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-[#E5E7EB] px-6 font-medium text-[#0A0A0A] transition-colors hover:bg-[#F9FAFB]"
-                >
-                  ← Previous Post
-                </Link>
-              ) : (
-                <span />
-              )}
-              {nextPost ? (
-                <Link
-                  href={`/blog/${nextPost.slug}`}
-                  className="inline-flex h-12 items-center justify-center rounded-lg bg-primary px-6 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  Next Post →
-                </Link>
-              ) : (
-                <span />
-              )}
+            {/* Share */}
+            <div className="border-t border-[#E5E7EB] pt-8 mb-12">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-[#0A0A0A]">Share this article</h3>
+                <ShareIcons url={url} title={post.title} />
+              </div>
             </div>
-          </div>
-        </PageShell>
-      </div>
 
-      {popularPosts.length > 0 ? (
-        <div className="border-t border-[#E5E7EB] bg-[#F9FAFB] py-12 lg:py-16">
-          <PageShell className="px-4 sm:px-6 lg:px-[148px]">
-            <h2 className="mb-8 text-2xl font-bold text-[#0A0A0A]">Popular Post</h2>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              {popularPosts.map((p) => (
-                <PopularPostCard key={p.slug} post={p} />
-              ))}
-            </div>
-          </PageShell>
+            {/* Related Posts */}
+            {relatedPosts.length > 0 && (
+              <section className="border-t border-[#E5E7EB] pt-12">
+                <h2 className="text-2xl font-bold text-[#0A0A0A] mb-8">Related Articles</h2>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {relatedPosts.map((relatedPost) => (
+                    <article key={relatedPost.id} className="group">
+                      <Link href={`/blog/${relatedPost.slug}`}>
+                        <div className="mb-4 overflow-hidden rounded-xl">
+                          <Image
+                            src={relatedPost.featured_image_url || encodeURI("/images/blog-hero.png")}
+                            alt={relatedPost.title}
+                            width={400}
+                            height={240}
+                            className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
+                          />
+                        </div>
+                        <div>
+                          {relatedPost.category && (
+                            <p className="text-xs font-medium text-[#6B7280] mb-2">
+                              {relatedPost.category}
+                            </p>
+                          )}
+                          <h3 className="font-semibold text-[#0A0A0A] group-hover:text-primary line-clamp-2">
+                            {relatedPost.title}
+                          </h3>
+                          {relatedPost.excerpt && (
+                            <p className="mt-2 text-sm text-[#6B7280] line-clamp-2">
+                              {relatedPost.excerpt}
+                            </p>
+                          )}
+                        </div>
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
+          </article>
         </div>
-      ) : null}
-    </article>
+      </PageShell>
+    </div>
   );
 }
