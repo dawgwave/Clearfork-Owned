@@ -3,13 +3,16 @@
     a. create .env.local file for local running and debugging
     b. .ai/remove-chat.md
     c. run app locally.
-    d. .ai/nocodb-to-mysql.md after this step is implemented, I need a way to run the app locally with db from step c.
-    e. get google gemini account credentials.
-    f. .ai/gcp-vs-digiocean.mdmysql db. create a script to create a local database for debugging.
+    d. .ai/nocodb-to-mysql.md
+    e. get google gemini account credentials
+        Do we need them?
+        quote form submission seems to work locally, 
+        not sure it would still work fine on production though.
 
 2. functionality:
     a. .ai/auto-import-blogs.md
-
+    b. how does admin get notified of quote requests?
+    
 3. pages (this section is repeated in the markdown files referenced above):
 
 - get quote form with attachments - we want to port this functionality as is
