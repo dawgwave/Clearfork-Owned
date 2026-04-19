@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRecaptcha } from "@/lib/recaptcha";
 import { insertQuote, testConnection } from "@/lib/database";
+import { getCurrentUser } from "@/lib/auth-middleware";
 
 /** NocoDB PhoneNumber (validate) only accepts digit-only strings. */
 function normalizePhone(raw: string): string {
@@ -37,6 +38,9 @@ function formatDateForMySQL(dateStr: string): string | undefined {
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if user is authenticated (optional - allows anonymous submissions)
+    const { user } = await getCurrentUser(req);
+    
     const data = await req.json();
     if (!data?.firstName || !data?.lastName) {
       return NextResponse.json({ message: "Missing required fields." }, { status: 400 });
@@ -63,6 +67,7 @@ export async function POST(req: NextRequest) {
 
     // Prepare data for MySQL insertion
     const quoteData = {
+      userId: user?.id,  // Set user_id if user is authenticated, otherwise undefined (NULL)
       firstName: str(data.firstName),
       lastName: str(data.lastName),
       dateOfBirth: formatDateForMySQL(str(data.dateOfBirth)),

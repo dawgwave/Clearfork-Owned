@@ -14,5 +14,5 @@
     a. (done) .ai/cosmetic-changes.md 
     b. (done) registration, authentication, and authorization system with regular user and admin accounts (keep in mind other account types may be added in the future, so keep architecture flexible for that)
     c. admin page to add new blogs
-    d. admin page with list of quote requests.
-    e. user page to see quote requests and responses to them via chat with ability to send images and attach documents. We will probably need tables like chats, chat_messages, chat_images, and any other relevant tables.
+    d. (done) admin page with list of quote requests.
+    e. (done) user page to see quote requests and responses to them via chat with ability to send images and attach documents. We will probably need tables like chats, chat_messages, chat_images, and any other relevant tables.

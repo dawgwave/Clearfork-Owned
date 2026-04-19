@@ -26,9 +26,9 @@ function getConnectionConfig() {
 function getPoolConfig() {
   return {
     ...getConnectionConfig(),
-    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
-    acquireTimeout: parseInt(process.env.DB_ACQUIRE_TIMEOUT || '60000'),
-    timeout: parseInt(process.env.DB_TIMEOUT || '60000'),
+        connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
+        queueLimit: 0,
+    // Remove invalid options: acquireTimeout and timeout are not valid mysql2 pool options
   };
 }
 
@@ -62,7 +62,7 @@ export async function query<T = any>(
 ): Promise<T[]> {
   const connection = await getConnection();
   try {
-    const [rows] = await connection.execute(sql, params);
+    const [rows] = await connection.query(sql, params || []);
     return rows as T[];
   } finally {
     connection.release();
@@ -73,6 +73,7 @@ export async function query<T = any>(
  * Insert a new quote record and return the inserted ID
  */
 export async function insertQuote(quoteData: {
+  userId?: number;  // Add user_id to link quote to authenticated user
   firstName: string;
   lastName: string;
   dateOfBirth?: string;
@@ -97,18 +98,25 @@ export async function insertQuote(quoteData: {
   militaryService?: string;
   isStudent?: boolean;
 }): Promise<number> {
-  const sql = `
-    INSERT INTO quotes (
-      first_name, last_name, date_of_birth, marital_status, gender,
-      street_address, state, zip_code, phone_number, can_receive_texts,
-      email_address, driver_license_number, social_security_number,
-      additional_driver_first_name, additional_driver_last_name, additional_driver_dob,
-      additional_driver_license, vin_number, vehicle_use, estimated_annual_mileage,
-      occupation, military_service, is_student
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `;
+  // First insert the record, then update quote_number based on the new ID
+  const connection = await getConnection();
+  
+  try {
+    await connection.beginTransaction();
+    
+    const insertSql = `
+      INSERT INTO quote_requests (
+        user_id, first_name, last_name, date_of_birth, marital_status, gender,
+        street_address, state, zip_code, phone_number, can_receive_texts,
+        email_address, driver_license_number, social_security_number,
+        additional_driver_first_name, additional_driver_last_name, additional_driver_dob,
+        additional_driver_license, vin_number, vehicle_use, estimated_annual_mileage,
+        occupation, military_service, is_student
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
   const params = [
+    quoteData.userId || null,  // Can be NULL for anonymous submissions
     quoteData.firstName,
     quoteData.lastName,
     quoteData.dateOfBirth || null,
@@ -134,11 +142,23 @@ export async function insertQuote(quoteData: {
     quoteData.isStudent || false,
   ];
 
-  const connection = await getConnection();
-  try {
-    const [result] = await connection.execute(sql, params);
-    const insertResult = result as mysql.ResultSetHeader;
-    return insertResult.insertId;
+    // Insert the record
+    const [insertResult] = await connection.execute(insertSql, params);
+    const insertId = (insertResult as mysql.ResultSetHeader).insertId;
+    
+    // Generate and update quote number
+    const quoteNumber = `QTE-${new Date().getFullYear()}-${String(insertId).padStart(6, '0')}`;
+    await connection.execute(
+      'UPDATE quote_requests SET quote_number = ? WHERE id = ?',
+      [quoteNumber, insertId]
+    );
+    
+    await connection.commit();
+    return insertId;
+    
+  } catch (error) {
+    await connection.rollback();
+    throw error;
   } finally {
     connection.release();
   }

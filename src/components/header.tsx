@@ -245,6 +245,13 @@ export function Header() {
             >
               Subscribe to News
             </Link>
+          ) : user && user.roles.some(role => role.name === 'admin') ? (
+            <Link
+              href="/admin/quotes"
+              className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              Quote Requests
+            </Link>
           ) : (
             <Link
               href="/get-a-quote"
@@ -285,20 +292,28 @@ export function Header() {
                   className="absolute right-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover shadow-lg"
                 >
                   <div className="py-1">
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
+                  >
+                    Profile
+                  </Link>
+                  {!user.roles.some(role => role.name === 'admin') && (
                     <Link
-                      href="/profile"
+                      href="/my-quotes"
                       className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
                     >
-                      Profile
+                      My Quote Requests
                     </Link>
-                    {user.roles.some(role => role.name === 'admin') && (
-                      <Link
-                        href="/admin"
-                        className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
+                  )}
+                  {user.roles.some(role => role.name === 'admin') && (
+                    <Link
+                      href="/admin"
+                      className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
+                    >
+                      Admin Dashboard
+                    </Link>
+                  )}
                     <hr className="my-1" />
                     <button
                       onClick={() => logout()}
@@ -450,12 +465,21 @@ export function Header() {
               </Link>
             ) : (
               <>
-                <Link
-                  href="/get-a-quote"
-                  className="mt-2 rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground"
-                >
-                  Get a Quote
-                </Link>
+                {user && user.roles.some(role => role.name === 'admin') ? (
+                  <Link
+                    href="/admin/quotes"
+                    className="mt-2 rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground"
+                  >
+                    Quote Requests
+                  </Link>
+                ) : (
+                  <Link
+                    href="/get-a-quote"
+                    className="mt-2 rounded-full bg-primary px-4 py-3 text-center text-sm font-semibold text-primary-foreground"
+                  >
+                    Get a Quote
+                  </Link>
+                )}
                 <a
                   href="tel:8172498683"
                   className="mt-1 block py-2 text-center text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -479,6 +503,14 @@ export function Header() {
                 >
                   Profile
                 </Link>
+                {!user.roles.some(role => role.name === 'admin') && (
+                  <Link
+                    href="/my-quotes"
+                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+                  >
+                    My Quote Requests
+                  </Link>
+                )}
                 {user.roles.some(role => role.name === 'admin') && (
                   <Link
                     href="/admin"

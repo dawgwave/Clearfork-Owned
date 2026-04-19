@@ -158,7 +158,7 @@ export default function AdminDashboard() {
               <Button asChild className="w-full">
                 <Link href="/admin/quotes">
                   <FileText className="h-4 w-4 mr-2" />
-                  View Quote Requests
+                  Manage Quote Requests
                 </Link>
               </Button>
               <Button variant="outline" asChild className="w-full">
