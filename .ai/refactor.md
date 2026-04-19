@@ -20,6 +20,6 @@
     f. for registered users, prefill "get a quote" form with data from the user's profile
     g. https
     h. email verification
-    i. remove from admin dashboard
+    i. remove from admin dashboard (done)
         x. "Blog Posts: Static MDX files" section
         xx. "User Management" section

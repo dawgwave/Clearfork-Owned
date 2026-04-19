@@ -63,12 +63,12 @@ export default function AdminDashboard() {
             <Badge>Admin</Badge>
           </div>
           <p className="text-muted-foreground">
-            Manage users, content, and system settings for Clearfork Insurance.
+            Manage quote requests, blog content, and system settings for Clearfork Insurance.
           </p>
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -97,19 +97,6 @@ export default function AdminDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-              <MessageSquare className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">3</div>
-              <p className="text-xs text-muted-foreground">
-                Static MDX files
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">System Status</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -123,30 +110,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>
-                Manage user accounts, roles, and permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button asChild className="w-full">
-                <Link href="/admin/users">
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage Users
-                </Link>
-              </Button>
-              <Button variant="outline" asChild className="w-full">
-                <Link href="/admin/roles">
-                  <Shield className="h-4 w-4 mr-2" />
-                  Manage Roles
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 lg:max-w-xl gap-6">
           <Card>
             <CardHeader>
               <CardTitle>Content Management</CardTitle>
@@ -219,9 +183,8 @@ export default function AdminDashboard() {
             <div>
               <h4 className="font-medium text-blue-900 mb-1">Admin Features Ready</h4>
               <p className="text-sm text-blue-700">
-                The authentication system is now complete with flexible role-based access. 
-                Additional admin features like user management, quote viewing, and blog management 
-                can be added as separate components when needed.
+                The authentication system is now complete with flexible role-based access.
+                Quote and blog management are available from the quick actions above.
               </p>
             </div>
           </div>
