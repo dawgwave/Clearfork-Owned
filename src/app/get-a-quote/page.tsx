@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useAuth } from "@/components/auth/auth-provider";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -33,6 +34,7 @@ import { DocumentProcessingBanner } from "@/components/quote-assistant/document-
 import {
   quoteFormSchema,
   defaultQuoteValues,
+  quotePrefillFromUserProfile,
   type QuoteFormValues,
   isQuoteFormFieldKey,
   QUOTE_FIELD_LABELS,
@@ -42,6 +44,8 @@ import { submitQuoteRequestToApi } from "@/lib/quote-submit-client";
 import { cn } from "@/lib/utils";
 
 export default function GetAQuotePage() {
+  const { user, loading: authLoading } = useAuth();
+  const profilePrefillDone = useRef(false);
   const { toast } = useToast();
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -65,9 +69,24 @@ export default function GetAQuotePage() {
   const {
     register,
     setValue,
+    getValues,
     watch,
     formState: { errors },
   } = form;
+
+  useEffect(() => {
+    if (authLoading || !user || profilePrefillDone.current) return;
+    profilePrefillDone.current = true;
+    const patch = quotePrefillFromUserProfile(user);
+    const keys = Object.keys(patch) as (keyof typeof patch)[];
+    for (const key of keys) {
+      const val = patch[key];
+      if (val === undefined || val === "") continue;
+      const current = getValues(key);
+      if (typeof current === "string" && current.trim() !== "") continue;
+      setValue(key, val, { shouldDirty: false, shouldValidate: false });
+    }
+  }, [authLoading, user, getValues, setValue]);
   const US_STATES = [
     "Alabama",
     "Alaska",

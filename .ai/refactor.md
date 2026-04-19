@@ -16,7 +16,7 @@
         x. "Blog Posts: Static MDX files" section
         xx. "User Management" section
     j. (done) allow image uploads in blogs management 
+    f. (done) for registered users, prefill "get a quote" form with data from the user's profile
 
-    f. for registered users, prefill "get a quote" form with data from the user's profile
     g. https
     h. email verification

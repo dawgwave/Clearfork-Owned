@@ -40,6 +40,42 @@ export function isQuoteFormFieldKey(k: string): k is keyof QuoteFormValues {
   return (QUOTE_FORM_FIELD_KEYS as readonly string[]).includes(k);
 }
 
+/** Session user fields from /api/auth/me — used to prefill the quote form. */
+export type QuoteUserProfilePrefill = {
+  first_name?: string | null;
+  last_name?: string | null;
+  email: string;
+  phone?: string | null;
+};
+
+/**
+ * Maps profile data into quote form fields. Only includes keys with non-empty values.
+ */
+export function quotePrefillFromUserProfile(
+  user: QuoteUserProfilePrefill,
+): Partial<
+  Pick<
+    QuoteFormValues,
+    "firstName" | "lastName" | "emailAddress" | "phoneNumber"
+  >
+> {
+  const out: Partial<
+    Pick<
+      QuoteFormValues,
+      "firstName" | "lastName" | "emailAddress" | "phoneNumber"
+    >
+  > = {};
+  const fn = user.first_name?.trim();
+  const ln = user.last_name?.trim();
+  const em = user.email?.trim();
+  const ph = user.phone?.trim();
+  if (fn) out.firstName = fn;
+  if (ln) out.lastName = ln;
+  if (em) out.emailAddress = em;
+  if (ph) out.phoneNumber = ph;
+  return out;
+}
+
 export const defaultQuoteValues: QuoteFormValues = {
   firstName: "",
   lastName: "",
