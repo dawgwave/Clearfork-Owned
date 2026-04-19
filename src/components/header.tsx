@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, Menu, X, User, LogOut } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth/auth-provider";
 
 const INSURANCE_LINKS = [
   { label: "Home/Auto/Umbrella", href: "/home-auto-insurance" },
@@ -31,11 +32,13 @@ const CONTENT_LINKS = [
 export function Header() {
   const pathname = usePathname();
   const isBlogPost = /^\/blog\/.+/.test(pathname ?? "");
+  const { user, logout } = useAuth();
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [contentOpen, setContentOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileServicesOpen, setMobileServicesOpen] = useState(false);
   const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
   const [mobileContentOpen, setMobileContentOpen] = useState(false);
@@ -52,9 +55,10 @@ export function Header() {
   const scheduleClose = useCallback(() => {
     clearCloseTimer();
     closeTimer.current = setTimeout(() => {
-      setServicesOpen(false);
-      setAboutOpen(false);
-      setContentOpen(false);
+    setServicesOpen(false);
+    setAboutOpen(false);
+    setContentOpen(false);
+    setUserMenuOpen(false);
     }, 120);
   }, [clearCloseTimer]);
 
@@ -249,6 +253,80 @@ export function Header() {
               Get a Quote
             </Link>
           )}
+          
+          {/* Authentication Menu */}
+          {user ? (
+            <div className="relative">
+              <button
+                onMouseEnter={() => {
+                  clearCloseTimer();
+                  setUserMenuOpen(true);
+                }}
+                onMouseLeave={scheduleClose}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors hover:text-primary",
+                  userMenuOpen && "text-primary",
+                )}
+              >
+                <User className="h-4 w-4" />
+                {user.first_name || user.email}
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    userMenuOpen && "rotate-180",
+                  )}
+                />
+              </button>
+
+              {userMenuOpen && (
+                <div
+                  onMouseEnter={clearCloseTimer}
+                  onMouseLeave={scheduleClose}
+                  className="absolute right-0 top-full z-50 mt-1 w-48 rounded-md border bg-popover shadow-lg"
+                >
+                  <div className="py-1">
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
+                    >
+                      Profile
+                    </Link>
+                    {user.roles.some(role => role.name === 'admin') && (
+                      <Link
+                        href="/admin"
+                        className="block px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <hr className="my-1" />
+                    <button
+                      onClick={() => logout()}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-popover-foreground hover:bg-muted"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="text-sm font-medium text-foreground transition-colors hover:text-primary"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-secondary/80"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
 
         <button
@@ -385,6 +463,53 @@ export function Header() {
                   (817) 249-8683
                 </a>
               </>
+            )}
+
+            {/* Mobile Authentication */}
+            <hr className="my-2 border-border" />
+            {user ? (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium">
+                  <User className="h-4 w-4" />
+                  {user.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user.email}
+                </div>
+                <Link
+                  href="/profile"
+                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  Profile
+                </Link>
+                {user.roles.some(role => role.name === 'admin') && (
+                  <Link
+                    href="/admin"
+                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+                  >
+                    Admin Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={() => logout()}
+                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Link
+                  href="/login"
+                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="block rounded-md bg-secondary px-3 py-2 text-sm font-medium text-secondary-foreground hover:bg-secondary/80"
+                >
+                  Sign Up
+                </Link>
+              </div>
             )}
           </nav>
         </PageShell>
