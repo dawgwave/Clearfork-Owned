@@ -7,6 +7,7 @@ import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { insuranceAgencySchema } from "@/lib/schema";
+import { isRecaptchaSiteKeyConfigured } from "@/lib/recaptcha";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
 
@@ -100,7 +101,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <Footer />
           <Toaster />
         </AuthProvider>
-        {RECAPTCHA_SITE_KEY && (
+        {isRecaptchaSiteKeyConfigured() && (
           <Script
             src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
             strategy="afterInteractive"

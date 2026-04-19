@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createUser, generateToken } from '@/lib/auth';
-import { verifyRecaptcha } from '@/lib/recaptcha';
+import { isRecaptchaVerificationEnabled, verifyRecaptcha } from '@/lib/recaptcha';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify reCAPTCHA if configured
-    if (recaptchaToken && process.env.RECAPTCHA_SECRET_KEY && process.env.RECAPTCHA_SECRET_KEY !== 'your_recaptcha_secret_key_here') {
+    if (recaptchaToken && isRecaptchaVerificationEnabled()) {
       const captcha = await verifyRecaptcha(recaptchaToken);
       if (!captcha.success || captcha.score < 0.5) {
         return NextResponse.json(

@@ -14,8 +14,11 @@ function getConnectionConfig() {
   return {
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT || '3306'),
-    database: process.env.DB_DATABASE || 'clearfork-insurance',
-    user: process.env.DB_USERNAME || 'clearfork_user',
+    database:
+      process.env.DB_DATABASE ||
+      process.env.DB_NAME ||
+      'clearfork-insurance',
+    user: process.env.DB_USERNAME || process.env.DB_USER || 'clearfork_user',
     password: process.env.DB_PASSWORD || '',
     ssl: process.env.DB_SSL === 'true' ? {} : false,
     charset: 'utf8mb4',
@@ -95,7 +98,7 @@ export async function insertQuote(quoteData: {
   vehicleUse?: string;
   estimatedAnnualMileage?: number;
   occupation?: string;
-  militaryService?: string;
+  militaryService?: boolean;
   isStudent?: boolean;
 }): Promise<number> {
   // First insert the record, then update quote_number based on the new ID
@@ -138,7 +141,7 @@ export async function insertQuote(quoteData: {
     quoteData.vehicleUse || null,
     quoteData.estimatedAnnualMileage || null,
     quoteData.occupation || null,
-    quoteData.militaryService || null,
+    quoteData.militaryService ?? false,
     quoteData.isStudent || false,
   ];
 

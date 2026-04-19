@@ -38,6 +38,7 @@ import {
   QUOTE_FIELD_LABELS,
 } from "@/lib/quote-types";
 import { isAllowedQuoteUploadFile } from "@/lib/quote-upload";
+import { submitQuoteRequestToApi } from "@/lib/quote-submit-client";
 import { cn } from "@/lib/utils";
 
 export default function GetAQuotePage() {
@@ -281,41 +282,28 @@ export default function GetAQuotePage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const completeQuoteSubmitSuccess = useCallback(() => {
+    toast({
+      title: "Quote request submitted!",
+      description:
+        "We'll review your information and get back to you shortly.",
+    });
+    form.reset(defaultQuoteValues);
+    setUploadedFile(null);
+  }, [form, toast]);
+
   const onSubmit = async (data: QuoteFormValues) => {
     setIsSubmitting(true);
     try {
-      let recaptchaToken: string | undefined;
-      const win = window as unknown as {
-        grecaptcha?: {
-          execute: (key: string, opts: { action: string }) => Promise<string>;
-        };
-      };
-      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-      if (win.grecaptcha && siteKey) {
-        recaptchaToken = await win.grecaptcha.execute(siteKey, {
-          action: "quote_submit",
-        });
-      }
-
-      const response = await fetch("/api/quote-submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, recaptchaToken }),
-      });
-
-      if (!response.ok) throw new Error("Submit failed");
-
-      toast({
-        title: "Quote request submitted!",
-        description:
-          "We'll review your information and get back to you shortly.",
-      });
-      form.reset(defaultQuoteValues);
-      setUploadedFile(null);
-    } catch {
+      await submitQuoteRequestToApi(data);
+      completeQuoteSubmitSuccess();
+    } catch (e) {
       toast({
         title: "Submission failed",
-        description: "Something went wrong. Please try again.",
+        description:
+          e instanceof Error
+            ? e.message
+            : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -323,9 +311,40 @@ export default function GetAQuotePage() {
     }
   };
 
-  const handleAssistantSubmit = () => {
-    form.handleSubmit(onSubmit)();
-  };
+  const handleAssistantSubmit = useCallback((): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      form.handleSubmit(
+        async (data) => {
+          setIsSubmitting(true);
+          try {
+            await submitQuoteRequestToApi(data);
+            completeQuoteSubmitSuccess();
+            resolve();
+          } catch (e) {
+            toast({
+              title: "Submission failed",
+              description:
+                e instanceof Error
+                  ? e.message
+                  : "Something went wrong. Please try again.",
+              variant: "destructive",
+            });
+            reject(e);
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        () => {
+          toast({
+            title: "Form incomplete",
+            description: "Please fill in all required fields before submitting.",
+            variant: "destructive",
+          });
+          reject(new Error("validation"));
+        },
+      )();
+    });
+  }, [form, toast, completeQuoteSubmitSuccess]);
 
   const fieldTooltips: Partial<Record<keyof QuoteFormValues, string>> = {
     firstName: "Your legal first name as it appears on your driver's license.",

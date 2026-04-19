@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { verifyRecaptcha } from "@/lib/recaptcha";
+import { isRecaptchaVerificationEnabled, verifyRecaptcha } from "@/lib/recaptcha";
 
 const contactSchema = z.object({
   firstName: z.string().min(1),
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const data = contactSchema.parse(body);
 
-    if (data.recaptchaToken) {
+    if (data.recaptchaToken && isRecaptchaVerificationEnabled()) {
       const captcha = await verifyRecaptcha(data.recaptchaToken);
       if (!captcha.success || captcha.score < 0.5) {
         return NextResponse.json(

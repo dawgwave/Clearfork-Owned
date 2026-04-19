@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyRecaptcha } from "@/lib/recaptcha";
+import { isRecaptchaVerificationEnabled, verifyRecaptcha } from "@/lib/recaptcha";
 import { insertQuote, testConnection } from "@/lib/database";
-import { getCurrentUser } from "@/lib/auth-middleware";
+import { getUserFromRequest } from "@/lib/auth-middleware";
+import {
+  mileageBandToInt,
+  militaryServiceToBool,
+  normalizeGender,
+  normalizeMaritalStatus,
+  normalizeVehicleUse,
+  yesNoToBool,
+} from "@/lib/quote-normalize";
 
 /** NocoDB PhoneNumber (validate) only accepts digit-only strings. */
 function normalizePhone(raw: string): string {
@@ -38,16 +46,17 @@ function formatDateForMySQL(dateStr: string): string | undefined {
 
 export async function POST(req: NextRequest) {
   try {
-    // Check if user is authenticated (optional - allows anonymous submissions)
-    const { user } = await getCurrentUser(req);
+    const user = await getUserFromRequest(req);
     
     const data = await req.json();
     if (!data?.firstName || !data?.lastName) {
       return NextResponse.json({ message: "Missing required fields." }, { status: 400 });
     }
 
-    // Skip reCAPTCHA in development if keys not configured
-    if (data.recaptchaToken && process.env.RECAPTCHA_SECRET_KEY && process.env.RECAPTCHA_SECRET_KEY !== 'your_recaptcha_secret_key_here') {
+    if (
+      data.recaptchaToken &&
+      isRecaptchaVerificationEnabled()
+    ) {
       const captcha = await verifyRecaptcha(data.recaptchaToken);
       if (!captcha.success || captcha.score < 0.5) {
         console.error("[quote-submit] reCAPTCHA verification failed");
@@ -65,32 +74,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Database not available." }, { status: 500 });
     }
 
-    // Prepare data for MySQL insertion
+    const maritalRaw = str(data.maritalStatus);
+    const genderRaw = str(data.gender);
+    const vehicleRaw = str(data.vehicleUse);
+    const mileageRaw = str(data.estimatedAnnualMileage);
+
+    // Prepare data for MySQL insertion (ENUMs + NOT NULL columns must match schema)
     const quoteData = {
-      userId: user?.id,  // Set user_id if user is authenticated, otherwise undefined (NULL)
+      userId: user?.id, // Set user_id if user is authenticated, otherwise undefined (NULL)
       firstName: str(data.firstName),
       lastName: str(data.lastName),
       dateOfBirth: formatDateForMySQL(str(data.dateOfBirth)),
-      maritalStatus: str(data.maritalStatus) || undefined,
-      gender: str(data.gender) || undefined,
+      maritalStatus: maritalRaw ? normalizeMaritalStatus(maritalRaw) : undefined,
+      gender: genderRaw ? normalizeGender(genderRaw) : undefined,
       streetAddress: str(data.streetAddress) || undefined,
       state: str(data.state) || undefined,
       zipCode: str(data.zipCode) || undefined,
       phoneNumber: normalizePhone(str(data.phoneNumber)) || undefined,
-      canReceiveTexts: data.canReceiveTexts === true || data.canReceiveTexts === "true",
+      canReceiveTexts: yesNoToBool(data.canReceiveTexts, false),
       emailAddress: str(data.emailAddress) || undefined,
       driverLicenseNumber: str(data.driverLicenseNumber) || undefined,
-      socialSecurityNumber: str(data.socialSecurityNumber) || undefined,
+      socialSecurityNumber: str(data.socialSecurityNumber).trim() || "000000000",
       additionalDriverFirstName: str(data.additionalDriverFirstName) || undefined,
       additionalDriverLastName: str(data.additionalDriverLastName) || undefined,
       additionalDriverDOB: formatDateForMySQL(str(data.additionalDriverDOB)),
       additionalDriverLicense: str(data.additionalDriverLicense) || undefined,
-      vinNumber: str(data.vinNumber) || undefined,
-      vehicleUse: str(data.vehicleUse) || undefined,
-      estimatedAnnualMileage: data.estimatedAnnualMileage ? parseInt(str(data.estimatedAnnualMileage)) : undefined,
-      occupation: str(data.occupation) || undefined,
-      militaryService: str(data.militaryService) || undefined,
-      isStudent: data.isStudent === true || data.isStudent === "true",
+      vinNumber: str(data.vinNumber).trim() || "PENDING0000000001",
+      vehicleUse: normalizeVehicleUse(vehicleRaw),
+      estimatedAnnualMileage: mileageBandToInt(mileageRaw),
+      occupation: str(data.occupation).trim() || "Not specified",
+      militaryService: militaryServiceToBool(str(data.militaryService)),
+      isStudent: yesNoToBool(data.isStudent, false),
     };
 
     // Insert quote into MySQL database
@@ -98,7 +112,13 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ success: true, id: insertedId });
   } catch (error) {
-    console.error("[quote-submit] Error:", error instanceof Error ? error.message : String(error));
+    const err = error as Error & { code?: string; sqlMessage?: string };
+    console.error(
+      "[quote-submit] Error:",
+      err?.message,
+      err?.code,
+      err?.sqlMessage,
+    );
     return NextResponse.json({ message: "An error occurred." }, { status: 500 });
   }
 }

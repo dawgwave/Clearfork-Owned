@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS quote_requests (
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     date_of_birth DATE NOT NULL,
-    marital_status ENUM('single', 'married', 'divorced', 'widowed') NOT NULL,
+    marital_status ENUM('single', 'married', 'separated', 'divorced', 'widowed') NOT NULL,
     gender ENUM('male', 'female', 'other') NOT NULL,
     street_address VARCHAR(255) NOT NULL,
     state VARCHAR(50) NOT NULL,
@@ -158,4 +158,5 @@ INSERT IGNORE INTO migrations (name) VALUES
 ('20260418_140000_create_quotes_table.sql'),
 ('20260419_160000_create_auth_tables.sql'),
 ('20260419_180000_add_missing_tables.sql'),
-('20260419_145816_create_blog_posts_table.sql');
+('20260419_145816_create_blog_posts_table.sql'),
+('20260419_200000_quote_requests_marital_separated.sql');
