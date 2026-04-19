@@ -76,12 +76,26 @@ export default function AdminQuoteChatPage() {
       });
       
       if (!response.ok) {
-        if (response.status === 404) {
-          setError('Quote not found');
+        let apiMessage = '';
+        try {
+          const errBody = await response.json();
+          apiMessage =
+            typeof errBody?.error === 'string'
+              ? errBody.error
+              : typeof errBody?.message === 'string'
+                ? errBody.message
+                : '';
+        } catch {
+          /* non-JSON body */
+        }
+        if (response.status === 401) {
+          setError(apiMessage || 'Not signed in or session expired. Sign in again and reopen this page.');
+        } else if (response.status === 404) {
+          setError(apiMessage || 'Quote not found');
         } else if (response.status === 403) {
-          setError('Access denied');
+          setError(apiMessage || 'Access denied');
         } else {
-          setError('Failed to load chat');
+          setError(apiMessage || 'Failed to load chat');
         }
         return;
       }

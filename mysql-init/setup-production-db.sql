@@ -37,7 +37,10 @@ CREATE TABLE IF NOT EXISTS quote_requests (
     military_service BOOLEAN NOT NULL DEFAULT FALSE,
     is_student BOOLEAN NOT NULL DEFAULT FALSE,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     status ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
+    priority ENUM('low', 'normal', 'high', 'urgent') NOT NULL DEFAULT 'normal',
+    internal_notes TEXT NULL,
     assigned_agent_id INT NULL,
     INDEX idx_user_id (user_id),
     INDEX idx_status (status),
@@ -148,6 +151,53 @@ CREATE TABLE IF NOT EXISTS blog_post_views (
     INDEX idx_viewed_at (viewed_at)
 );
 
+-- Migration: quote chat (20260419_220000_create_quote_chat_tables.sql)
+CREATE TABLE IF NOT EXISTS chats (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    quote_id INT NOT NULL,
+    status ENUM('active', 'closed', 'archived') NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_chats_quote_id (quote_id),
+    FOREIGN KEY (quote_id) REFERENCES quote_requests(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    chat_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message_type ENUM('text', 'system', 'quote_update') NOT NULL DEFAULT 'text',
+    message TEXT NOT NULL,
+    metadata JSON NULL,
+    is_internal BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_chat_messages_chat_id (chat_id),
+    INDEX idx_chat_messages_sender_id (sender_id),
+    FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS chat_attachments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    message_id INT NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    file_path VARCHAR(512) NOT NULL,
+    file_type VARCHAR(100) NOT NULL,
+    file_size INT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    upload_by INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_chat_attachments_message_id (message_id),
+    FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (upload_by) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT IGNORE INTO chats (quote_id)
+SELECT id FROM quote_requests qr WHERE NOT EXISTS (
+  SELECT 1 FROM chats c WHERE c.quote_id = qr.id
+);
+
 -- Insert default roles
 INSERT IGNORE INTO roles (name, description) VALUES 
 ('user', 'Regular user'),
@@ -158,4 +208,6 @@ INSERT IGNORE INTO migrations (name) VALUES
 ('20260418_140000_create_quotes_table.sql'),
 ('20260419_160000_create_auth_tables.sql'),
 ('20260419_180000_add_missing_tables.sql'),
-('20260419_145816_create_blog_posts_table.sql');
+('20260419_145816_create_blog_posts_table.sql'),
+('20260419_220000_create_quote_chat_tables.sql'),
+('20260419_230000_quote_requests_admin_columns.sql');

@@ -72,12 +72,22 @@ export default function UserQuoteChatPage() {
       });
       
       if (!response.ok) {
-        if (response.status === 404) {
-          setError('Quote not found');
+        let apiMessage = '';
+        try {
+          const errBody = await response.json();
+          apiMessage =
+            typeof errBody?.error === 'string' ? errBody.error : '';
+        } catch {
+          /* ignore */
+        }
+        if (response.status === 401) {
+          setError(apiMessage || 'Not signed in or session expired.');
+        } else if (response.status === 404) {
+          setError(apiMessage || 'Quote not found');
         } else if (response.status === 403) {
-          setError('Access denied');
+          setError(apiMessage || 'Access denied');
         } else {
-          setError('Failed to load chat');
+          setError(apiMessage || 'Failed to load chat');
         }
         return;
       }

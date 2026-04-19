@@ -31,6 +31,9 @@ function getPoolConfig() {
     ...getConnectionConfig(),
         connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '10'),
         queueLimit: 0,
+    // Avoid BigInt in row values (breaks JSON.stringify in API routes)
+    supportBigNumbers: true,
+    bigNumberStrings: true,
     // Remove invalid options: acquireTimeout and timeout are not valid mysql2 pool options
   };
 }

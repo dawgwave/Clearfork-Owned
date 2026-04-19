@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-middleware';
 import { getQuoteById, getQuoteChat, getChatMessages, sendChatMessage } from '@/lib/quotes';
+import { jsonStringifySafe } from '@/lib/utils';
+
+function jsonResponse(data: unknown, init?: ResponseInit) {
+  return new NextResponse(jsonStringifySafe(data), {
+    ...init,
+    headers: { 'content-type': 'application/json', ...init?.headers },
+  });
+}
 
 export async function GET(
   request: NextRequest,
@@ -62,7 +70,7 @@ export async function GET(
         includeInternal: isAdmin // Admins can see internal messages
       });
       
-      return NextResponse.json({
+      return jsonResponse({
         success: true,
         chat,
         messages,
@@ -73,9 +81,10 @@ export async function GET(
         }
       });
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
       console.error('Chat fetch error:', error);
       return NextResponse.json(
-        { error: 'Failed to fetch chat' },
+        { error: 'Failed to fetch chat', detail: process.env.NODE_ENV === 'development' ? msg : undefined },
         { status: 500 }
       );
     }
@@ -163,14 +172,15 @@ export async function POST(
         );
       }
       
-      return NextResponse.json({
+      return jsonResponse({
         success: true,
         message: sentMessage
       });
     } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
       console.error('Chat message send error:', error);
       return NextResponse.json(
-        { error: 'Failed to send message' },
+        { error: 'Failed to send message', detail: process.env.NODE_ENV === 'development' ? msg : undefined },
         { status: 500 }
       );
     }
