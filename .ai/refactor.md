@@ -4,11 +4,7 @@
     b. (done).ai/remove-chat.md
     c. (done)run app locally.
     d. (done).ai/nocodb-to-mysql.md
-    e. get google gemini account credentials
-        Do we need them?
-        quote form submission seems to work locally, 
-        not sure it would still work fine on production though.
-    f. (done) migrate from google cloud to digital ocean
+    e. (done) migrate from google cloud to digital ocean
        i. I can connect to droplet via web console. not sure if I have ssh keys set up locally to be able to ssh into the droplet from my terminal. How do you suggest we handle deployment?
 
 2. functionality:
@@ -17,9 +13,11 @@
     c. (done) admin blog post management
     d. (done) admin page with list of quote requests.
     e. (done) user page to see quote requests and responses to them via chat with ability to send images and attach documents. We will probably need tables like chats, chat_messages, chat_images, and any other relevant tables.
+    g. (done) remove from admin dashboard 
+        x. "Blog Posts: Static MDX files" section
+        xx. "User Management" section
+    j. (done) allow image uploads in blogs management 
+
     f. for registered users, prefill "get a quote" form with data from the user's profile
     g. https
     h. email verification
-    i. remove from admin dashboard (done)
-        x. "Blog Posts: Static MDX files" section
-        xx. "User Management" section

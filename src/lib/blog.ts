@@ -247,7 +247,7 @@ export async function createBlogPost(postData: BlogPostInput): Promise<number> {
       postData.author_id || null,
       postData.category || null,
       JSON.stringify(postData.tags || []),
-      postData.featured_image_url || null,
+      postData.featured_image_url?.trim() || null,
       postData.meta_description || null,
       postData.is_published || false,
       published_at
@@ -335,7 +335,7 @@ export async function updateBlogPost(id: number, postData: Partial<BlogPostInput
     }
     if (postData.featured_image_url !== undefined) {
       updateFields.push('featured_image_url = ?');
-      params.push(postData.featured_image_url);
+      params.push(postData.featured_image_url?.trim() || null);
     }
     if (postData.meta_description !== undefined) {
       updateFields.push('meta_description = ?');

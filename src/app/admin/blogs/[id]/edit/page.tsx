@@ -18,6 +18,7 @@ import {
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BlogFeaturedImageField } from "@/components/admin/blog-featured-image-field";
 
 interface BlogPost {
   id: number;
@@ -256,6 +257,14 @@ export default function EditBlogPostPage() {
                       rows={3}
                     />
                   </div>
+
+                  <BlogFeaturedImageField
+                    value={formData.featured_image_url}
+                    onChange={(url) =>
+                      setFormData((prev) => ({ ...prev, featured_image_url: url }))
+                    }
+                    disabled={saving}
+                  />
                 </CardContent>
               </Card>
 
@@ -353,23 +362,12 @@ export default function EditBlogPostPage() {
                 </CardContent>
               </Card>
 
-              {/* SEO & Media */}
+              {/* SEO */}
               <Card>
                 <CardHeader>
-                  <CardTitle>SEO & Media</CardTitle>
+                  <CardTitle>SEO</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="featured_image_url">Featured Image URL</Label>
-                    <Input
-                      id="featured_image_url"
-                      value={formData.featured_image_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, featured_image_url: e.target.value }))}
-                      placeholder="https://example.com/image.jpg"
-                      type="url"
-                    />
-                  </div>
-                  
                   <div>
                     <Label htmlFor="meta_description">Meta Description</Label>
                     <Textarea
