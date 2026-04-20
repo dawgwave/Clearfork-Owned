@@ -1,0 +1,15 @@
+# Caddy terminates TLS on 443 and serves HTTP on 80.
+# Let's Encrypt registration email (change if needed):
+{
+	email clearfork@sig4you.com
+}
+
+clearforkinsurance.com, www.clearforkinsurance.com {
+	reverse_proxy clearfork-app:8080
+}
+
+# HTTP when Host is not the domain above (e.g. http://YOUR_DROPLET_IP/).
+# Do not use https:// with a raw IP — no public certificate exists for IPs.
+:80 {
+	reverse_proxy clearfork-app:8080
+}

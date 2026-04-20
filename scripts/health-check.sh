@@ -38,10 +38,10 @@ fi
 # Check if app is running
 echo ""
 echo "🚀 Application Status"
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$DROPLET_IP:3000" --connect-timeout 10 || echo "000")
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://$DROPLET_IP/" --connect-timeout 10 || echo "000")
 
 if [[ "$HTTP_STATUS" == "200" ]]; then
-    pass "Application responding on port 3000"
+    pass "Application responding on port 80 (Caddy → app)"
 elif [[ "$HTTP_STATUS" == "000" ]]; then
     fail "Cannot connect to application (connection refused)"
 else
@@ -53,7 +53,7 @@ echo ""
 echo "📄 Page Health Checks"
 pages=("/" "/blog" "/get-a-quote" "/login")
 for page in "${pages[@]}"; do
-    status=$(curl -s -o /dev/null -w "%{http_code}" "http://$DROPLET_IP:3000$page" --connect-timeout 5 || echo "000")
+    status=$(curl -s -o /dev/null -w "%{http_code}" "http://$DROPLET_IP$page" --connect-timeout 5 || echo "000")
     if [[ "$status" == "200" ]]; then
         pass "$page - OK"
     else
@@ -94,22 +94,22 @@ fi
 
 echo ""
 echo "🔗 Network Ports:"
-netstat -tlnp | grep ":3000\|:3306\|:80\|:443" | head -5 || echo "No services on common ports"
+(ss -tlnp 2>/dev/null || netstat -tlnp) | grep -E ":80|:443|:8080|:3306" | head -8 || echo "No services on common ports"
 '
 
-# Database connectivity test
+# App reachable on loopback (Caddy on :80)
 echo ""
-echo "🗄️  Database Health"
-DB_TEST=$(ssh "$DROPLET_USER@$DROPLET_IP" "
-    curl -s -X POST http://localhost:3000/api/auth/me \
-    -H 'Content-Type: application/json' \
-    --connect-timeout 5 || echo 'DB_ERROR'
+echo "🗄️  App / API loopback"
+LOOP_STATUS=$(ssh "$DROPLET_USER@$DROPLET_IP" "
+    curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/api/auth/me --connect-timeout 5 || echo '000'
 ")
 
-if [[ "$DB_TEST" != "DB_ERROR" ]]; then
-    pass "Database connectivity OK"
+if [[ "$LOOP_STATUS" == "401" ]] || [[ "$LOOP_STATUS" == "200" ]]; then
+    pass "API reachable via Caddy (GET /api/auth/me → $LOOP_STATUS)"
+elif [[ "$LOOP_STATUS" == "000" ]]; then
+    fail "Cannot reach app on localhost:80"
 else
-    fail "Database connection issues"
+    warn "GET /api/auth/me returned HTTP $LOOP_STATUS (expected 401 without cookie)"
 fi
 
 echo ""

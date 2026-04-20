@@ -84,19 +84,38 @@ pm2 status
 ```bash
 # Docker logs
 docker-compose logs -f clearfork-app
+docker-compose logs -f caddy
 
 # PM2 logs
 pm2 logs clearfork-insurance
 ```
 
 ### Access Application
-- **Web App**: `http://YOUR_DROPLET_IP:3000`
-- **Admin Panel**: `http://YOUR_DROPLET_IP:3000/admin`
+
+Docker deploy runs **Caddy** on **80** and **443**, reverse-proxying to the Next.js container on **8080** (not exposed on the host).
+
+- **HTTP (by IP)**: `http://YOUR_DROPLET_IP/`
+- **HTTPS (after DNS points here)**: `https://clearforkinsurance.com/` and `https://www.clearforkinsurance.com/`
+- **Admin**: `https://clearforkinsurance.com/admin` (or `http://YOUR_DROPLET_IP/admin` over port 80)
+
+**Raw IP in the browser**
+
+- Use **`http://YOUR_DROPLET_IP/`** (HTTP, port 80). **`https://` + IP** will not work with a normal certificate; use HTTP for IP, or use **`https://clearforkinsurance.com`** once DNS points here.
+- **Port 3000** is no longer exposed on the host; the app is only reachable via Caddy on **80** / **443**.
+
+**Before DNS is updated:** Let’s Encrypt can only issue certs for hostnames, not for a bare IP. The repo `Caddyfile` includes an extra **`:80`** block so **HTTP by IP** still reaches the app. If Caddy fails to start (e.g. config conflict on an old Caddy version), fall back to `cp Caddyfile.ip-only Caddyfile && docker-compose restart caddy`.
 
 ## Database Setup
 
 ### Docker Deployment
 Database runs automatically in MySQL container.
+
+### Direct deployment (PM2) and ports
+
+`direct` mode does not start Caddy. Run the app on **8080** (`PORT=8080` in `.env.production`) and either:
+
+- Put **Caddy/nginx** on the host listening on **80/443** and `reverse_proxy` to `127.0.0.1:8080`, or  
+- For local testing only: `http://YOUR_DROPLET_IP:8080` (open the port in the firewall if you use this).
 
 ### Direct Deployment
 Install MySQL manually:
@@ -119,8 +138,8 @@ FLUSH PRIVILEGES;
 - [ ] `.env.production` configured with real values
 - [ ] SSH key added to droplet
 - [ ] Domain DNS pointing to droplet IP
-- [ ] SSL certificate configured (Nginx/Caddy)
-- [ ] Firewall configured (UFW)
+- [ ] SSL: Caddy obtains certificates automatically when `deploy/Caddyfile` is used and DNS points to the droplet
+- [ ] Firewall: `ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw enable`
 - [ ] Regular backups scheduled
 - [ ] Monitoring set up
 
@@ -134,17 +153,24 @@ FLUSH PRIVILEGES;
    ssh-copy-id root@YOUR_DROPLET_IP
    ```
 
-2. **Port 3000 Not Accessible**
+2. **Port 80 / 443 Not Accessible**
    ```bash
-   # Check firewall
-   ufw allow 3000
+   ufw allow 80/tcp
+   ufw allow 443/tcp
+   ufw status
    ```
+   The app container does **not** need port 3000 on the host; Caddy listens on 80/443.
 
-3. **Database Connection Failed**
+3. **Caddy / HTTPS errors**
+   - Confirm DNS A records for `@` and `www` point to the droplet.
+   - Check logs: `docker-compose logs caddy`
+   - For IP-only testing, use `Caddyfile.ip-only` as noted above.
+
+4. **Database Connection Failed**
    - Check `.env.production` database credentials
    - Ensure MySQL is running: `systemctl status mysql`
 
-4. **Build Failed**
+5. **Build Failed**
    - Check Node.js version: `node --version` (should be 22.x)
    - Clear cache: `rm -rf .next node_modules && npm install`
 

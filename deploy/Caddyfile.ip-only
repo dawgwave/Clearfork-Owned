@@ -1,0 +1,7 @@
+# Use this only for testing via raw IP before DNS points at the server.
+# On the droplet: cp Caddyfile.ip-only Caddyfile && docker compose restart caddy
+# Switch back to deploy/Caddyfile when the domain resolves.
+
+:80 {
+	reverse_proxy clearfork-app:8080
+}

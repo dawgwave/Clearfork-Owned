@@ -71,48 +71,18 @@ deploy_docker() {
     # Save and transfer image
     log "Transferring Docker image to droplet..."
     docker save "$DOCKER_IMAGE" | gzip | ssh "$DROPLET_USER@$DROPLET_IP" "
-        cd /opt &&
-        mkdir -p $APP_NAME &&
-        cd $APP_NAME &&
+        mkdir -p $REMOTE_DIR &&
+        cd $REMOTE_DIR &&
         gunzip | docker load
     " || error "Image transfer failed"
-    
-    # Create docker-compose.yml on droplet
-    log "Setting up Docker Compose configuration..."
-    ssh "$DROPLET_USER@$DROPLET_IP" "cat > $REMOTE_DIR/docker-compose.yml" << 'EOF'
-version: '3.8'
 
-services:
-  clearfork-app:
-    image: clearfork-insurance:latest
-    ports:
-      - "3000:3000"
-      - "8080:8080"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-    env_file:
-      - .env.production
-    restart: unless-stopped
-    volumes:
-      - ./uploads:/app/uploads  # For file uploads if needed
-
-  mysql:
-    image: mysql:8.0
-    environment:
-      - MYSQL_ROOT_PASSWORD=your_mysql_root_password
-      - MYSQL_DATABASE=clearfork-insurance
-      - MYSQL_USER=clearfork_user
-      - MYSQL_PASSWORD=your_mysql_password
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: unless-stopped
-
-volumes:
-  mysql_data:
-EOF
+    log "Syncing Docker Compose, Caddy, and MySQL init..."
+    ssh "$DROPLET_USER@$DROPLET_IP" "mkdir -p $REMOTE_DIR"
+    scp docker-compose.yml \
+        deploy/Caddyfile \
+        deploy/Caddyfile.ip-only \
+        "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/" || error "Config transfer failed"
+    scp -r mysql-init "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/" || error "mysql-init transfer failed"
     
     # Copy environment file (only if it doesn't exist on server)
     log "Checking environment configuration..."
@@ -125,7 +95,7 @@ EOF
         ssh "$DROPLET_USER@$DROPLET_IP" "cat > $REMOTE_DIR/.env.production" << 'EOF'
 # Production Environment Variables
 NODE_ENV=production
-PORT=3000
+PORT=8080
 
 # Database
 DB_HOST=mysql
@@ -230,7 +200,9 @@ main() {
     fi
 
     success "Deployment completed successfully!"
-    log "Your app should be available at: http://$DROPLET_IP:3000"
+    log "Public site (HTTP): http://$DROPLET_IP/"
+    log "HTTPS (after DNS): https://clearforkinsurance.com/"
+    warn "If DNS is not pointed at this droplet yet, use deploy/Caddyfile.ip-only on the server (see DEPLOYMENT.md)."
 
     # Show deployment status
     log "Checking deployment status..."
@@ -245,7 +217,7 @@ main() {
             pm2 list
         fi &&
         echo 'Listening ports:' &&
-        netstat -tlnp | grep ':3000\|:8080' || echo 'No services on port 3000/8080'
+        (ss -tlnp 2>/dev/null || netstat -tlnp) | grep -E ':80|:443|:8080' || echo 'Check ss/netstat for :80 :443'
     "
 }
 
