@@ -527,15 +527,9 @@ export const QuoteAssistantModal = forwardRef<
           <p className="text-xs text-muted-foreground text-center">
             I'll guide you step by step. Say "submit" anytime to submit the form.
           </p>
-          <a
-            href="https://getstarfish.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex justify-center items-center gap-2 pb-1 hover:opacity-80 transition-opacity"
-          >
-            <span className="text-xs text-muted-foreground">Powered by</span>
-            <img src="/getStarfish.svg" alt="Starfish" className="h-12 w-auto" />
-          </a>
+          <div className="flex justify-center items-center gap-2 pb-1">
+            <span className="text-xs text-muted-foreground">Powered by Google Gemini</span>
+          </div>
         </div>
       </aside>
     </QuoteAssistantProvider>

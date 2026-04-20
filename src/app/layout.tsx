@@ -4,9 +4,10 @@ import Script from "next/script";
 import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { Chatbot } from "@/components/chatbot";
 import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/components/auth/auth-provider";
 import { insuranceAgencySchema } from "@/lib/schema";
+import { isRecaptchaSiteKeyConfigured } from "@/lib/recaptcha";
 
 const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
 
@@ -94,12 +95,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <Toaster />
-        <Chatbot />
-        {RECAPTCHA_SITE_KEY && (
+        <AuthProvider>
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <Toaster />
+        </AuthProvider>
+        {isRecaptchaSiteKeyConfigured() && (
           <Script
             src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}
             strategy="afterInteractive"

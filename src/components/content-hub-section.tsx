@@ -11,31 +11,17 @@ import type { PodcastEpisode, PodcastFeedResult } from "@/types/podcast-feed";
 
 const img = (path: string) => encodeURI(path);
 
-const BLOG_ITEMS = [
-  {
-    title:
-      "Insurance Rates Are a Black Box: Understanding Texas Property Insurance Rates",
-    excerpt:
-      "You open your homeowners renewal and the premium has jumped again — and you are almost certainly not told how that number was calculated. A policy perspective on rate regulation and transparency in Texas.",
-    author: "David Hargrove",
-    role: "Owner",
-    date: "Apr 8, 2026",
-    href: "/blog/insurance-rates-are-a-black-box-texas-property",
-    image: img("/images/group photo 3_1761008420820.jpg"),
-    avatar: img("/images/david hargrove head shot_1761004385331.jpg"),
-  },
-  {
-    title: "Insurance Rates Are a Black Box 2.0: The Auto Insurance Edition",
-    excerpt:
-      "Why drivers deserve to understand what they are really paying for — credit-based scores, telematics, CLUE, renewal ratchets, and transparency gaps unique to auto.",
-    author: "David Hargrove",
-    role: "Owner",
-    date: "Apr 8, 2026",
-    href: "/blog/insurance-rates-black-box-auto-insurance-edition",
-    image: img("/images/SCR-20250919-sqme_1758335513957.jpeg"),
-    avatar: img("/images/david hargrove head shot_1761004385331.jpg"),
-  },
-] as const;
+/** Two most recent published posts from DB (see home page). */
+export type HomeBlogPreview = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  href: string;
+  image: string;
+  author: string;
+  dateLabel: string;
+  avatar: string;
+};
 
 /** Thumbnails from YouTube (see https://img.youtube.com). */
 const ytThumb = (id: string) =>
@@ -98,7 +84,11 @@ const PODCAST_HUB_FALLBACK_AVATAR = img(
   "/images/david hargrove head shot_1761004385331.jpg",
 );
 
-export default function ContentHubSection() {
+export default function ContentHubSection({
+  blogPosts = [],
+}: {
+  blogPosts?: HomeBlogPreview[];
+}) {
   const [modal, setModal] = useState<ModalState>(null);
   const [rssHubItems, setRssHubItems] = useState<PodcastEpisode[]>([]);
   const [rssHubChannel, setRssHubChannel] = useState<string | undefined>();
@@ -141,61 +131,68 @@ export default function ContentHubSection() {
         <div className="grid gap-12 lg:grid-cols-3 lg:gap-8">
           {/* Blog */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--navy)]">Blog</h2>
+            <Link href="/blog">
+              <h2 className="text-2xl font-bold text-[var(--navy)] hover:text-primary transition-colors cursor-pointer">Blog</h2>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">
               Insights and practical guidance from our team.
             </p>
             <ul className="mt-8 space-y-8">
-              {BLOG_ITEMS.map((post) => (
-                <li key={post.href}>
-                  <Link href={post.href} className="group block">
-                    <div className="relative aspect-[16/10] overflow-hidden rounded-lg">
-                      <Image
-                        src={post.image}
-                        alt=""
-                        fill
-                        className="object-cover transition duration-300 group-hover:scale-[1.02]"
-                        sizes="(max-width: 1024px) 100vw, 33vw"
-                      />
-                      <div
-                        className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/20"
-                        aria-hidden
-                      />
-                      <span
-                        className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[var(--navy)] shadow-md transition group-hover:bg-white"
-                        aria-hidden
-                      >
-                        <ArrowUpRight className="h-5 w-5" />
-                      </span>
-                    </div>
-                    <h3 className="mt-4 text-lg font-semibold text-[var(--navy)] transition group-hover:text-primary">
-                      {post.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-[var(--slate)]">
-                      {post.excerpt}
-                    </p>
-                    <div className="mt-4 flex items-center gap-3">
-                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-white">
+              {blogPosts.length === 0 ? (
+                <li className="text-sm leading-relaxed text-[var(--slate)]">
+                  New articles will appear here when published. Browse the full blog for
+                  all posts.
+                </li>
+              ) : (
+                blogPosts.map((post) => (
+                  <li key={post.slug}>
+                    <Link href={post.href} className="group block">
+                      <div className="relative aspect-[16/10] overflow-hidden rounded-lg">
                         <Image
-                          src={post.avatar}
+                          src={post.image}
                           alt=""
                           fill
-                          className="object-cover"
-                          sizes="36px"
+                          className="object-cover transition duration-300 group-hover:scale-[1.02]"
+                          sizes="(max-width: 1024px) 100vw, 33vw"
                         />
+                        <div
+                          className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-black/20"
+                          aria-hidden
+                        />
+                        <span
+                          className="absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/95 text-[var(--navy)] shadow-md transition group-hover:bg-white"
+                          aria-hidden
+                        >
+                          <ArrowUpRight className="h-5 w-5" />
+                        </span>
                       </div>
-                      <div className="text-xs">
-                        <p className="font-semibold text-[var(--navy)]">
-                          {post.author}
-                        </p>
-                        <p className="text-[var(--slate)]">
-                          {post.role} · {post.date}
-                        </p>
+                      <h3 className="mt-4 text-lg font-semibold text-[var(--navy)] transition group-hover:text-primary">
+                        {post.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-[var(--slate)]">
+                        {post.excerpt}
+                      </p>
+                      <div className="mt-4 flex items-center gap-3">
+                        <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-white">
+                          <Image
+                            src={post.avatar}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="36px"
+                          />
+                        </div>
+                        <div className="text-xs">
+                          <p className="font-semibold text-[var(--navy)]">
+                            {post.author}
+                          </p>
+                          <p className="text-[var(--slate)]">{post.dateLabel}</p>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                    </Link>
+                  </li>
+                ))
+              )}
             </ul>
             <Link
               href="/blog"
@@ -207,7 +204,9 @@ export default function ContentHubSection() {
 
           {/* Video */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--navy)]">Video</h2>
+            <Link href="/videos">
+              <h2 className="text-2xl font-bold text-[var(--navy)] hover:text-primary transition-colors cursor-pointer">Vlog</h2>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">
               Short explainers on coverage and planning.
             </p>
@@ -278,7 +277,9 @@ export default function ContentHubSection() {
 
           {/* Podcast */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--navy)]">Podcast</h2>
+            <Link href="/podcast">
+              <h2 className="text-2xl font-bold text-[var(--navy)] hover:text-primary transition-colors cursor-pointer">Podcast</h2>
+            </Link>
             <p className="mt-3 text-sm leading-relaxed text-[var(--slate)]">
               Conversations on risk, protection, and peace of mind.
             </p>

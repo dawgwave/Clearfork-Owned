@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useAuth } from "@/components/auth/auth-provider";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -33,14 +34,18 @@ import { DocumentProcessingBanner } from "@/components/quote-assistant/document-
 import {
   quoteFormSchema,
   defaultQuoteValues,
+  quotePrefillFromUserProfile,
   type QuoteFormValues,
   isQuoteFormFieldKey,
   QUOTE_FIELD_LABELS,
 } from "@/lib/quote-types";
 import { isAllowedQuoteUploadFile } from "@/lib/quote-upload";
+import { submitQuoteRequestToApi } from "@/lib/quote-submit-client";
 import { cn } from "@/lib/utils";
 
 export default function GetAQuotePage() {
+  const { user, loading: authLoading } = useAuth();
+  const profilePrefillDone = useRef(false);
   const { toast } = useToast();
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -64,9 +69,24 @@ export default function GetAQuotePage() {
   const {
     register,
     setValue,
+    getValues,
     watch,
     formState: { errors },
   } = form;
+
+  useEffect(() => {
+    if (authLoading || !user || profilePrefillDone.current) return;
+    profilePrefillDone.current = true;
+    const patch = quotePrefillFromUserProfile(user);
+    const keys = Object.keys(patch) as (keyof typeof patch)[];
+    for (const key of keys) {
+      const val = patch[key];
+      if (val === undefined || val === "") continue;
+      const current = getValues(key);
+      if (typeof current === "string" && current.trim() !== "") continue;
+      setValue(key, val, { shouldDirty: false, shouldValidate: false });
+    }
+  }, [authLoading, user, getValues, setValue]);
   const US_STATES = [
     "Alabama",
     "Alaska",
@@ -281,41 +301,28 @@ export default function GetAQuotePage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const completeQuoteSubmitSuccess = useCallback(() => {
+    toast({
+      title: "Quote request submitted!",
+      description:
+        "We'll review your information and get back to you shortly.",
+    });
+    form.reset(defaultQuoteValues);
+    setUploadedFile(null);
+  }, [form, toast]);
+
   const onSubmit = async (data: QuoteFormValues) => {
     setIsSubmitting(true);
     try {
-      let recaptchaToken: string | undefined;
-      const win = window as unknown as {
-        grecaptcha?: {
-          execute: (key: string, opts: { action: string }) => Promise<string>;
-        };
-      };
-      const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-      if (win.grecaptcha && siteKey) {
-        recaptchaToken = await win.grecaptcha.execute(siteKey, {
-          action: "quote_submit",
-        });
-      }
-
-      const response = await fetch("/api/quote-submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, recaptchaToken }),
-      });
-
-      if (!response.ok) throw new Error("Submit failed");
-
-      toast({
-        title: "Quote request submitted!",
-        description:
-          "We'll review your information and get back to you shortly.",
-      });
-      form.reset(defaultQuoteValues);
-      setUploadedFile(null);
-    } catch {
+      await submitQuoteRequestToApi(data);
+      completeQuoteSubmitSuccess();
+    } catch (e) {
       toast({
         title: "Submission failed",
-        description: "Something went wrong. Please try again.",
+        description:
+          e instanceof Error
+            ? e.message
+            : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -323,9 +330,40 @@ export default function GetAQuotePage() {
     }
   };
 
-  const handleAssistantSubmit = () => {
-    form.handleSubmit(onSubmit)();
-  };
+  const handleAssistantSubmit = useCallback((): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      form.handleSubmit(
+        async (data) => {
+          setIsSubmitting(true);
+          try {
+            await submitQuoteRequestToApi(data);
+            completeQuoteSubmitSuccess();
+            resolve();
+          } catch (e) {
+            toast({
+              title: "Submission failed",
+              description:
+                e instanceof Error
+                  ? e.message
+                  : "Something went wrong. Please try again.",
+              variant: "destructive",
+            });
+            reject(e);
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        () => {
+          toast({
+            title: "Form incomplete",
+            description: "Please fill in all required fields before submitting.",
+            variant: "destructive",
+          });
+          reject(new Error("validation"));
+        },
+      )();
+    });
+  }, [form, toast, completeQuoteSubmitSuccess]);
 
   const fieldTooltips: Partial<Record<keyof QuoteFormValues, string>> = {
     firstName: "Your legal first name as it appears on your driver's license.",

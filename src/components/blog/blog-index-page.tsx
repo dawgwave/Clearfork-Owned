@@ -6,88 +6,120 @@ import Link from "next/link";
 import { Search, ChevronRight } from "lucide-react";
 import { PageShell } from "@/components/page-shell";
 import { Input } from "@/components/ui/input";
-import { BLOG_POSTS_DETAIL, type BlogCategory } from "@/data/blog-posts";
-
-type BlogFilter = BlogCategory | "All";
+import { cn } from "@/lib/utils";
 
 type BlogPost = {
-  id: string;
+  id: number;
   slug: string;
-  date: string;
-  category: Exclude<BlogCategory, "All">;
   title: string;
-  excerpt: string;
-  author: string;
-  imageSrc: string;
-  href: string;
+  excerpt?: string;
+  content: string;
+  category?: string;
+  tags: string[];
+  featured_image_url?: string;
+  is_published: boolean;
+  published_at?: string;
+  created_at: string;
+  updated_at: string;
+  author_name?: string;
 };
 
-const BLOG_POSTS: BlogPost[] = BLOG_POSTS_DETAIL.map((p, i) => ({
-  id: String(i + 1),
-  slug: p.slug,
-  date: p.date,
-  category: p.category,
-  title: p.title,
-  excerpt: p.excerpt,
-  author: p.author,
-  imageSrc: p.imageSrc,
-  href: `/blog/${p.slug}`,
-}));
+const BACKDROP = encodeURI("/images/backdrop photo_1761008288886.jpg");
 
-const CATEGORY_ORDER: BlogCategory[] = [
-  "Home & Auto",
-  "Commercial",
-  "Life",
-  "Cyber",
-  "Performance",
-];
-
-const CATEGORIES: BlogFilter[] = [
-  "All",
-  ...CATEGORY_ORDER.filter((c) => BLOG_POSTS_DETAIL.some((p) => p.category === c)),
-];
-
-const POSTS_PER_PAGE = 9;
-
-function BlogHero() {
+function HeroSection() {
   return (
-    <section className="relative isolate w-full bg-[#003169]" aria-label="Blog hero">
-      <img
-        src={encodeURI("/images/blog-hero.png")}
-        alt="Insurance News and Insights"
-        className="h-full min-h-[280px] w-full object-cover object-center sm:min-h-[320px]"
+    <section
+      className={cn(
+        "relative w-full overflow-hidden",
+        "h-[480px] sm:h-[540px] lg:h-[600px]",
+      )}
+    >
+      <Image
+        src={BACKDROP}
+        alt=""
+        fill
+        priority
+        className="object-cover"
+        sizes="100vw"
       />
+      <div
+        className="absolute inset-0 bg-[var(--navy-dark)]/75"
+        aria-hidden
+      />
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-[#8BC53F]/25 via-transparent to-[var(--navy)]/50"
+        aria-hidden
+      />
+      <div className="relative z-10 flex h-full items-center pb-8 pt-10 sm:pb-10 sm:pt-12">
+        <PageShell>
+          <div className="mx-auto max-w-3xl text-center text-white">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-white/80 sm:text-[13px]">
+              Expert insights and industry news
+            </p>
+            <h1 className="mx-auto max-w-[34rem] text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-[2.5rem] lg:leading-snug">
+              Insurance News & Insights
+            </h1>
+            <p className="mx-auto mt-5 max-w-[29rem] text-base leading-relaxed text-white/90 sm:text-lg">
+              Stay informed with expert insights, industry news, and practical tips from SIG Clearfork Insurance Group.
+            </p>
+          </div>
+        </PageShell>
+      </div>
     </section>
   );
 }
 
 function BlogCard({ post }: { post: BlogPost }) {
+  const publishedDate = post.published_at 
+    ? new Date(post.published_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long', 
+        day: 'numeric'
+      })
+    : new Date(post.created_at).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+
   return (
     <article className="overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-sm transition-shadow hover:shadow-md">
       <div className="relative h-[220px] overflow-hidden rounded-t-2xl">
-        <Image src={post.imageSrc} alt="" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 33vw" />
+        <Image 
+          src={post.featured_image_url || encodeURI("/images/blog-hero.png")} 
+          alt={post.title}
+          fill 
+          className="object-cover" 
+          sizes="(max-width: 1024px) 100vw, 33vw" 
+        />
       </div>
       <div className="p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <time className="text-sm text-[#6B7280]" dateTime={post.date}>
-            {post.date}
+          <time className="text-sm text-[#6B7280]" dateTime={post.published_at || post.created_at}>
+            {publishedDate}
           </time>
-          <span className="rounded bg-[#F3F4F6] px-2.5 py-1 text-xs font-medium text-[#4B5162]">
-            {post.category}
-          </span>
+          {post.category && (
+            <span className="rounded bg-[#F3F4F6] px-2.5 py-1 text-xs font-medium text-[#4B5162]">
+              {post.category}
+            </span>
+          )}
         </div>
         <h2 className="mt-3 line-clamp-2 text-xl font-semibold text-[#0A0A0A]">{post.title}</h2>
-        <p className="mt-2 line-clamp-2 text-[15px] leading-[22px] text-[#6B7280]">{post.excerpt}</p>
-        <p className="mt-3 text-sm text-[#6B7280]">{post.author}</p>
+        <p className="mt-2 line-clamp-2 text-[15px] leading-[22px] text-[#6B7280]">
+          {post.excerpt || post.content.substring(0, 150) + '...'}
+        </p>
+        <p className="mt-3 text-sm text-[#6B7280]">
+          By {post.author_name || 'Clearfork Insurance'}
+        </p>
         <div className="mt-4 flex items-center justify-end gap-2">
           <Link
-            href={post.href}
+            href={`/blog/${post.slug}`}
             className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
           >
             View Post
           </Link>
           <Link
-            href={post.href}
+            href={`/blog/${post.slug}`}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
             aria-label={`View ${post.title}`}
           >
@@ -99,120 +131,178 @@ function BlogCard({ post }: { post: BlogPost }) {
   );
 }
 
-export function BlogIndexPage() {
-  const [activeCategory, setActiveCategory] = useState<BlogFilter>("All");
-  const [searchQuery, setSearchQuery] = useState("");
+interface BlogIndexPageProps {
+  initialPosts: BlogPost[];
+  initialCategories: string[];
+  initialTotal: number;
+  initialHasMore: boolean;
+  initialSearch: string;
+  initialCategory: string;
+}
+
+export function BlogIndexPage({
+  initialPosts,
+  initialCategories,
+  initialTotal,
+  initialHasMore,
+  initialSearch,
+  initialCategory
+}: BlogIndexPageProps) {
+  const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
+  const [loading, setLoading] = useState(false); // Start with false since we have initial data
+  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
+  const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(initialHasMore);
+  const [total, setTotal] = useState(initialTotal);
 
-  const filteredPosts = useMemo(() => {
-    let list = BLOG_POSTS;
-    if (activeCategory !== "All") {
-      list = list.filter((p) => p.category === activeCategory);
+  const POSTS_PER_PAGE = 9;
+
+  // Fetch blog posts from API
+  const fetchPosts = async (page: number = 1, reset: boolean = false) => {
+    try {
+      setLoading(true);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: POSTS_PER_PAGE.toString(),
+      });
+      
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+      
+      if (activeCategory !== "All") {
+        params.append('category', activeCategory);
+      }
+      
+      const response = await fetch(`/api/blogs?${params}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        if (reset || page === 1) {
+          setPosts(data.posts);
+        } else {
+          setPosts(prev => [...prev, ...data.posts]);
+        }
+        setTotal(data.total);
+        setHasMore(data.hasMore);
+      }
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+    } finally {
+      setLoading(false);
     }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          p.excerpt.toLowerCase().includes(q) ||
-          p.author.toLowerCase().includes(q),
-      );
-    }
-    return list;
-  }, [activeCategory, searchQuery]);
+  };
 
-  const paginatedPosts = useMemo(() => {
-    const start = (currentPage - 1) * POSTS_PER_PAGE;
-    return filteredPosts.slice(start, start + POSTS_PER_PAGE);
-  }, [filteredPosts, currentPage]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredPosts.length / POSTS_PER_PAGE));
-
+  // Only fetch when filters change (not on initial load)
   useEffect(() => {
-    setCurrentPage(1);
+    if (activeCategory !== initialCategory || searchQuery !== initialSearch) {
+      fetchPosts(1, true);
+      setCurrentPage(1);
+    }
   }, [activeCategory, searchQuery]);
+
+  // Filter and search logic
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  const loadMorePosts = () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    fetchPosts(nextPage, false);
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <BlogHero />
-
-      <section className="py-12 lg:py-16">
-        <PageShell>
-          <div className="mb-10 flex flex-col items-stretch justify-between gap-4 sm:flex-row sm:items-center">
-            <div className="flex flex-wrap items-center gap-2">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setActiveCategory(cat)}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    activeCategory === cat
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-[#E5E7EB] bg-white text-[#6B7280] hover:bg-[#F9FAFB]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <div className="relative w-full shrink-0 sm:w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9CA3AF]" />
+    <div className="min-h-screen bg-gray-50">
+      <HeroSection />
+      <PageShell className="py-16">
+        <div className="mx-auto max-w-6xl">
+          {/* Search and Filter Controls */}
+          <div className="mb-12 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 type="search"
-                placeholder="Search..."
+                placeholder="Search posts..."
+                className="pl-10"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => handleCategoryChange(category)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                    activeCategory === category
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-white text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-            {paginatedPosts.map((post) => (
-              <BlogCard key={post.id} post={post} />
-            ))}
+          {/* Results Summary */}
+          <div className="mb-8">
+            <p className="text-sm text-gray-600">
+              {loading ? 'Loading...' : `Showing ${posts.length} of ${total} posts`}
+              {activeCategory !== "All" && ` in "${activeCategory}"`}
+              {searchQuery && ` matching "${searchQuery}"`}
+            </p>
           </div>
 
-          {filteredPosts.length === 0 && (
-            <p className="py-12 text-center text-[#6B7280]">No posts match your filters.</p>
+          {/* Blog Grid */}
+          {loading && posts.length === 0 ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : posts.length > 0 ? (
+            <>
+              <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                {posts.map((post) => (
+                  <BlogCard key={post.id} post={post} />
+                ))}
+              </div>
+              
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="mt-12 text-center">
+                  <button
+                    onClick={loadMorePosts}
+                    disabled={loading}
+                    className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {loading ? 'Loading...' : 'Load More Posts'}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-gray-500">
+                {searchQuery || activeCategory !== "All" 
+                  ? "No posts match your filters." 
+                  : "No posts available yet."
+                }
+              </p>
+            </div>
           )}
-
-          {filteredPosts.length > 0 && (
-            <nav className="mt-12 flex items-center justify-center gap-2" aria-label="Blog pagination">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-2 text-sm text-[#6B7280] hover:text-foreground disabled:opacity-50"
-              >
-                ‹ Previous
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setCurrentPage(n)}
-                  className={`h-10 w-10 rounded-full text-sm font-medium transition-colors ${
-                    currentPage === n
-                      ? "bg-primary text-white"
-                      : "border border-[#E5E7EB] bg-white text-[#6B7280] hover:bg-[#F9FAFB]"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm text-[#6B7280] hover:text-foreground disabled:opacity-50"
-              >
-                Next ›
-              </button>
-            </nav>
-          )}
-        </PageShell>
-      </section>
+        </div>
+      </PageShell>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   useRef,
 } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { X, Bot, Send, Upload, Loader2, CircleHelp } from "lucide-react";
+import { X, Bot, Send, Upload, Loader2, CircleHelp, MessageSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { AnimatedBotLogo } from "@/components/animated-bot-logo";
 import {
   QuoteAssistantProvider,
   type QuoteAssistantContextType,
@@ -49,7 +48,8 @@ export type QuoteAssistantHandle = {
 
 interface AssistantModalProps {
   form: UseFormReturn<QuoteFormValues>;
-  onSubmit?: () => void;
+  /** Must resolve only after the quote is saved; reject on API/validation failure. */
+  onSubmit?: () => Promise<void>;
   onOpenChange?: (open: boolean) => void;
   /** Syncs with main quote page so the upload banner stays visible for assistant uploads */
   onDocumentProcessingChange?: (processing: boolean) => void;
@@ -243,16 +243,21 @@ export const QuoteAssistantModal = forwardRef<
     setMessages((prev) => [...prev, message]);
   }, []);
 
-  const runAssistantSubmit = useCallback(() => {
+  const runAssistantSubmit = useCallback(async () => {
     if (!onSubmit) return;
     appendMessage({ role: "bot", text: "Submitting your quote request..." });
-    onSubmit();
-    setTimeout(() => {
+    try {
+      await onSubmit();
       appendMessage({
         role: "bot",
         text: "Your quote request has been submitted! We'll review your information and get back to you shortly.",
       });
-    }, 400);
+    } catch {
+      appendMessage({
+        role: "bot",
+        text: "We could not save your quote request. Check the form for errors or try again. If this keeps happening, contact us by phone.",
+      });
+    }
   }, [appendMessage, onSubmit]);
 
   const getMissingRequiredFields = (): Array<keyof QuoteFormValues> => {
@@ -368,7 +373,7 @@ export const QuoteAssistantModal = forwardRef<
           }
         }
         if (submit) {
-          runAssistantSubmit();
+          await runAssistantSubmit();
         }
       } catch {
         appendMessage({
@@ -460,7 +465,7 @@ export const QuoteAssistantModal = forwardRef<
     }
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
     appendMessage({ role: "user", text: trimmed });
@@ -484,7 +489,7 @@ export const QuoteAssistantModal = forwardRef<
         });
         setTimeout(() => askNextQuestion(), 500);
       } else {
-        runAssistantSubmit();
+        await runAssistantSubmit();
       }
       return;
     }
@@ -746,7 +751,7 @@ export const QuoteAssistantModal = forwardRef<
           className="fixed bottom-6 right-6 z-[999] flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Open Quote Assistant"
         >
-          <AnimatedBotLogo />
+          <MessageSquare className="h-7 w-7" />
         </button>
       </QuoteAssistantProvider>
     );
@@ -923,19 +928,9 @@ export const QuoteAssistantModal = forwardRef<
             </Button>
           </div>
 
-          <a
-            href="https://getstarfish.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex justify-center items-center gap-2 pb-1 hover:opacity-80 transition-opacity"
-          >
-            <span className="text-xs text-muted-foreground">Powered by</span>
-            <img
-              src="/getStarfish.svg"
-              alt="Starfish"
-              className="h-12 w-auto"
-            />
-          </a>
+          <div className="flex justify-center items-center gap-2 pb-1">
+            <span className="text-xs text-muted-foreground">Powered by Google Gemini</span>
+          </div>
         </div>
       </aside>
     </QuoteAssistantProvider>
