@@ -21,3 +21,5 @@
     h. (done) pointed protectdfw.com to clearfork
     i. (done) https
     j. (done) check if vlogs and podcasts will auto show new videos and podcasts - NO they do not
+    k. (done) clean up test blogs
+    l. (done) fix file upload on blog
