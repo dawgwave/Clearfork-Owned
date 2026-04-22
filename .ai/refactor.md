@@ -17,6 +17,7 @@
         xx. "User Management" section
     j. (done) allow image uploads in blogs management 
     f. (done) for registered users, prefill "get a quote" form with data from the user's profile
-
-    g. https
-    h. email verification
+    g. (done) moved domain name from godaddy & changed DNS record to point to new server 
+    h. (done) pointed protectdfw.com to clearfork
+    i. (done) https
+    j. (done) check if vlogs and podcasts will auto show new videos and podcasts - NO they do not
