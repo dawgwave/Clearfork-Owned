@@ -23,3 +23,8 @@
     j. (done) check if vlogs and podcasts will auto show new videos and podcasts - NO they do not
     k. (done) clean up test blogs
     l. (done) fix file upload on blog
+
+3. updated prod deployment script to deploy only from main
+2. created test server
+ssh -N -L 127.0.0.1:3001:127.0.0.1:3001 root@67.205.157.124
+then http://127.0.0.1:3001

@@ -1,24 +1,4 @@
-1. update deployment script ./scripts/deploy.sh. 
-
-it deploys whatever branch is currently checked out.
-if the current branch is not master, the script should say so and stop.
-i do not want to deploy to production unless I finished testing and merged the feature branch to master.
-
-2. need a way to set up a test server on ubuntu droplet at http://67.205.157.124/.
-
-make some suggestions on how this could be achieved. 
-
-My idea is to have th test server under some sub-url of the live server,
-
-for example: https://clearforkinsurance.com/test/
-
-this page will only be acessible from ip 217.30.74.35, otherwise redirect to https://clearforkinsurance.com/
-
-Do you think this is a good idea or do you hav e abetter one?
-
-3. I also need a deployment script to deploy a currently checked out feature branch to this test server.
-
-4. /get-a-quote url should change to /get-auto-quote
+1. /get-a-quote url should change to /get-auto-quote
 
 on this /get-auto-quote page, add:
 
@@ -27,7 +7,7 @@ on this /get-auto-quote page, add:
 
 Create necessary database migrations and run them as needed.
 
-5. /get-a-quote should now be a new page where user chooses the type of insurance they want a quote for.
+2. /get-a-quote should now be a new page where user chooses the type of insurance they want a quote for.
 List of insurance types and corresponding urls for pages for each type:
 
 Home                        /get-auto-quote
