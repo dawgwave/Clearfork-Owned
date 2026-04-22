@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Get a Quote",
   description:
-    "Request a free insurance quote from SIG Clearfork Insurance Group — home, auto, commercial, life, cyber, and bonds in Benbrook, TX.",
+    "Choose the type of insurance you need and start a quote or connect with SIG Clearfork Insurance Group in Benbrook, TX.",
   alternates: { canonical: "https://clearforkinsurance.com/get-a-quote" },
 };
 

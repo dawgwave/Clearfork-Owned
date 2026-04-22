@@ -25,11 +25,26 @@ RUN addgroup --system --gid 1001 nodejs && \
 RUN mkdir -p /app/uploads/blog && chown -R nextjs:nodejs /app/uploads
 
 COPY --from=build /app/public ./public
-COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=build /app/.next/standalone ./
+COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/content ./content
+
+# DB migrations at container start (isolated under /migrate — standalone /app/node_modules untouched)
+COPY scripts/migrate-package.json /migrate/package.json
+WORKDIR /migrate
+RUN mkdir -p scripts src/lib
+COPY --from=build /app/migrations ./migrations
+COPY --from=build /app/scripts/migrate.ts ./scripts/migrate.ts
+COPY --from=build /app/src/lib/migrations.ts ./src/lib/migrations.ts
+COPY --from=build /app/src/lib/database.ts ./src/lib/database.ts
+RUN npm install --omit=dev --ignore-scripts && npm cache clean --force
+
+WORKDIR /app
+COPY scripts/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh && \
+    chown -R nextjs:nodejs /app /migrate
 
 USER nextjs
 EXPOSE 8080
 
-CMD ["node", "server.js"]
+ENTRYPOINT ["./docker-entrypoint.sh"]

@@ -25,6 +25,8 @@ clearforkinsurance.com, www.clearforkinsurance.com {
 		remote_ip 10.0.0.0/8
 		remote_ip 172.16.0.0/12
 		remote_ip 192.168.0.0/16
+		# Carrier-grade NAT / Tailscale-style 100.x (often seen via VPN tunnels)
+		remote_ip 100.64.0.0/10
 		remote_ip {$CADDY_STAGING_IP:217.30.74.35}
 	}
 	handle @allowed {

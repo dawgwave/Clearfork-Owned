@@ -1,14 +1,41 @@
 #!/usr/bin/env tsx
 
 import { config } from 'dotenv';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
 import { runMigrations, rollbackMigration, showMigrationStatus, createMigration } from '../src/lib/migrations';
 import { testConnection, closePool } from '../src/lib/database';
 
-// Load environment variables
-const envResult = config({ path: '.env.local' });
-if (envResult.error) {
-  console.warn('⚠️  Could not load .env.local file:', envResult.error.message);
+function loadEnvFiles(): void {
+  const explicit = process.env.MIGRATE_ENV_FILE;
+  if (explicit) {
+    config({ path: resolve(process.cwd(), explicit) });
+    return;
+  }
+  const prod = resolve(process.cwd(), '.env.production');
+  const staging = resolve(process.cwd(), '.env.staging');
+  const local = resolve(process.cwd(), '.env.local');
+  let any = false;
+  if (existsSync(prod)) {
+    config({ path: prod });
+    any = true;
+  }
+  if (existsSync(staging)) {
+    config({ path: staging });
+    any = true;
+  }
+  if (existsSync(local)) {
+    config({ path: local, override: true });
+    any = true;
+  }
+  if (!any) {
+    console.warn(
+      '⚠️  No env files on disk for migrate — using process.env only (normal in Docker with env_file)',
+    );
+  }
 }
+
+loadEnvFiles();
 
 // Debug environment variables (without showing sensitive data)
 if (process.env.DEBUG_MIGRATION) {

@@ -1,33 +1,120 @@
 import { z } from "zod";
 
-export const quoteFormSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
-  maritalStatus: z.string().min(1, "Marital status is required"),
-  gender: z.string().min(1, "Gender is required"),
-  streetAddress: z.string().min(1, "Street address is required"),
-  state: z.string().min(1, "State is required"),
-  zipCode: z.string().min(1, "Zip code is required"),
-  phoneNumber: z.string().min(1, "Phone number is required"),
-  canReceiveTexts: z.string().optional(),
-  emailAddress: z.string().email("Valid email is required"),
-  driverLicenseNumber: z.string().min(1, "Driver license number is required"),
-  socialSecurityNumber: z.string().optional(),
-
-  additionalDriverFirstName: z.string().optional(),
-  additionalDriverLastName: z.string().optional(),
-  additionalDriverDOB: z.string().optional(),
-  additionalDriverLicense: z.string().optional(),
-
-  vinNumber: z.string().optional(),
-  vehicleUse: z.string().optional(),
-  estimatedAnnualMileage: z.string().optional(),
-
-  occupation: z.string().optional(),
-  militaryService: z.string().optional(),
-  isStudent: z.string().optional(),
+/** Additional drivers (beyond primary) — all flat string fields. */
+const extraDriverRowSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  dateOfBirth: z.string(),
+  maritalStatus: z.string(),
+  gender: z.string(),
+  driverLicenseNumber: z.string(),
 });
+
+/** Additional vehicles (beyond the first) — VIN, use, mileage band. */
+const extraVehicleRowSchema = z.object({
+  vinNumber: z.string(),
+  vehicleUse: z.string(),
+  estimatedAnnualMileage: z.string(),
+});
+
+export const quoteFormSchema = z
+  .object({
+    firstName: z.string().min(1, "First name is required"),
+    lastName: z.string().min(1, "Last name is required"),
+    dateOfBirth: z.string().min(1, "Date of birth is required"),
+    maritalStatus: z.string().min(1, "Marital status is required"),
+    gender: z.string().min(1, "Gender is required"),
+    streetAddress: z.string().min(1, "Street address is required"),
+    state: z.string().min(1, "State is required"),
+    zipCode: z.string().min(1, "Zip code is required"),
+    phoneNumber: z.string().min(1, "Phone number is required"),
+    canReceiveTexts: z.string().optional(),
+    emailAddress: z.string().email("Valid email is required"),
+    driverLicenseNumber: z.string().min(1, "Driver license number is required"),
+    socialSecurityNumber: z.string().optional(),
+
+    extraDrivers: z.array(extraDriverRowSchema),
+    extraVehicles: z.array(extraVehicleRowSchema),
+
+    vinNumber: z.string().optional(),
+    vehicleUse: z.string().optional(),
+    estimatedAnnualMileage: z.string().optional(),
+
+    occupation: z.string().optional(),
+    militaryService: z.string().optional(),
+    isStudent: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    data.extraDrivers.forEach((d, i) => {
+      const started = [
+        d.firstName,
+        d.lastName,
+        d.dateOfBirth,
+        d.driverLicenseNumber,
+        d.gender,
+        d.maritalStatus,
+      ].some((s) => s.trim() !== "");
+      if (!started) return;
+      if (!d.firstName.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "First name is required",
+          path: ["extraDrivers", i, "firstName"],
+        });
+      if (!d.lastName.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Last name is required",
+          path: ["extraDrivers", i, "lastName"],
+        });
+      if (!d.dateOfBirth.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Date of birth is required",
+          path: ["extraDrivers", i, "dateOfBirth"],
+        });
+      if (!d.maritalStatus.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required",
+          path: ["extraDrivers", i, "maritalStatus"],
+        });
+      if (!d.gender.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Required",
+          path: ["extraDrivers", i, "gender"],
+        });
+      if (!d.driverLicenseNumber.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Driver license is required",
+          path: ["extraDrivers", i, "driverLicenseNumber"],
+        });
+    });
+    data.extraVehicles.forEach((v, i) => {
+      if (!v.vinNumber?.trim() && !v.vehicleUse?.trim() && !v.estimatedAnnualMileage?.trim())
+        return;
+      if (!v.vinNumber?.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "VIN is required for each additional vehicle",
+          path: ["extraVehicles", i, "vinNumber"],
+        });
+      if (!v.vehicleUse?.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Vehicle use is required",
+          path: ["extraVehicles", i, "vehicleUse"],
+        });
+      if (!v.estimatedAnnualMileage?.trim())
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Estimated annual mileage is required",
+          path: ["extraVehicles", i, "estimatedAnnualMileage"],
+        });
+    });
+  });
 
 export type QuoteFormValues = z.infer<typeof quoteFormSchema>;
 export type QuoteFormData = QuoteFormValues;
@@ -37,6 +124,7 @@ export const QUOTE_FORM_FIELD_KEYS = quoteFormSchema.keyof()
   .options as readonly (keyof QuoteFormValues)[];
 
 export function isQuoteFormFieldKey(k: string): k is keyof QuoteFormValues {
+  if (k === "extraDrivers" || k === "extraVehicles") return false;
   return (QUOTE_FORM_FIELD_KEYS as readonly string[]).includes(k);
 }
 
@@ -90,10 +178,8 @@ export const defaultQuoteValues: QuoteFormValues = {
   emailAddress: "",
   driverLicenseNumber: "",
   socialSecurityNumber: "",
-  additionalDriverFirstName: "",
-  additionalDriverLastName: "",
-  additionalDriverDOB: "",
-  additionalDriverLicense: "",
+  extraDrivers: [],
+  extraVehicles: [],
   vinNumber: "",
   vehicleUse: "",
   estimatedAnnualMileage: "",
@@ -116,10 +202,8 @@ export const QUOTE_FIELD_LABELS: Record<keyof QuoteFormValues, string> = {
   emailAddress: "Email Address",
   driverLicenseNumber: "Driver License Number",
   socialSecurityNumber: "Social Security Number",
-  additionalDriverFirstName: "Additional Driver First Name",
-  additionalDriverLastName: "Additional Driver Last Name",
-  additionalDriverDOB: "Additional Driver Date of Birth",
-  additionalDriverLicense: "Additional Driver License Number",
+  extraDrivers: "Additional drivers",
+  extraVehicles: "Additional vehicles",
   vinNumber: "VIN Number",
   vehicleUse: "Vehicle Use",
   estimatedAnnualMileage: "Estimated Annual Mileage",
@@ -210,10 +294,6 @@ export const FIELD_NAME_MAP: Record<string, keyof QuoteFormValues> = {
   ssn: "socialSecurityNumber",
   "social security": "socialSecurityNumber",
   "social security number": "socialSecurityNumber",
-  "additional driver first name": "additionalDriverFirstName",
-  "additional driver last name": "additionalDriverLastName",
-  "additional driver dob": "additionalDriverDOB",
-  "additional driver license": "additionalDriverLicense",
   vin: "vinNumber",
   "vin number": "vinNumber",
   "vehicle use": "vehicleUse",
@@ -469,7 +549,7 @@ export function normalizeExtractedQuoteValue(
     if (digits.length > 5) return digits.slice(0, 5);
     return v;
   }
-  if (key === "dateOfBirth" || key === "additionalDriverDOB") {
+  if (key === "dateOfBirth") {
     v = normalizeDateSlashOrder(v);
   }
 

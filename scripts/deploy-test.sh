@@ -1,6 +1,9 @@
 #!/bin/bash
-# Deploy the current branch to the test/staging droplet.
-# No branch guard — use ./scripts/deploy.sh for production (main only).
+# Deploy the current branch to the droplet IP you pass (default below).
+# WARNING: Same Compose project as production when prod and test share one host — deploy.sh runs
+# `docker compose down` + `up` for the ENTIRE stack (MySQL, prod app, Caddy). That restarts production too.
+# Sets CLEARFORK_DEPLOY_STAGING=1: skips main-branch guard and runs ./staging on after up (Caddy :3001).
+# Production-only updates: merge to main and use ./scripts/deploy.sh (same stack, same caution).
 # Usage: ./scripts/deploy-test.sh [docker|direct] [droplet-ip]
 # Default: docker to 67.205.157.124
 

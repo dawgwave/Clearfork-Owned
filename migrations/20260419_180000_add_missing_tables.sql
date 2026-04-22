@@ -1,8 +1,25 @@
 -- UP
--- Generate quote numbers for existing quotes (use submitted_at)
-UPDATE `quotes` 
+-- Legacy `quotes` table (20260418) had no quote_number — add it before backfilling
+SET @db := DATABASE();
+
+SET @sql := (
+  SELECT IF(
+    (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=@db AND TABLE_NAME='quotes') = 0,
+    'SELECT 1',
+    IF(
+      (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='quotes' AND COLUMN_NAME='quote_number') > 0,
+      'SELECT 1',
+      'ALTER TABLE `quotes` ADD COLUMN `quote_number` VARCHAR(50) NULL AFTER `id`'
+    )
+  )
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+UPDATE `quotes`
 SET `quote_number` = CONCAT('QTE-', YEAR(submitted_at), '-', LPAD(id, 6, '0'))
-WHERE `quote_number` IS NULL OR `quote_number` = '';
+WHERE (`quote_number` IS NULL OR `quote_number` = '');
 
 -- Create quote_updates table for tracking status changes (if not exists)
 CREATE TABLE IF NOT EXISTS `quote_updates` (
@@ -40,13 +57,8 @@ CREATE TABLE IF NOT EXISTS `notifications` (
   INDEX `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Create chat for each existing quote (if not exists)
-INSERT IGNORE INTO `chats` (`quote_id`)
-SELECT `id` FROM `quotes` WHERE NOT EXISTS (
-  SELECT 1 FROM `chats` WHERE `chats`.`quote_id` = `quotes`.`id`
-);
+-- Chat rows are created in 20260419_220000_create_quote_chat_tables.sql (chats did not exist here)
 
 -- DOWN
--- Drop additional tables
 DROP TABLE IF EXISTS `notifications`;
 DROP TABLE IF EXISTS `quote_updates`;

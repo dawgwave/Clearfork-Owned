@@ -78,8 +78,23 @@ export async function query<T = any>(
 /**
  * Insert a new quote record and return the inserted ID
  */
+export type QuoteInsertExtraDriver = {
+  firstName: string;
+  lastName: string;
+  dateOfBirth: string | null;
+  maritalStatus: string;
+  gender: string;
+  driverLicenseNumber: string;
+};
+
+export type QuoteInsertExtraVehicle = {
+  vinNumber: string;
+  vehicleUse: string;
+  estimatedAnnualMileage: number;
+};
+
 export async function insertQuote(quoteData: {
-  userId?: number;  // Add user_id to link quote to authenticated user
+  userId?: number;
   firstName: string;
   lastName: string;
   dateOfBirth?: string;
@@ -93,75 +108,113 @@ export async function insertQuote(quoteData: {
   emailAddress?: string;
   driverLicenseNumber?: string;
   socialSecurityNumber?: string;
-  additionalDriverFirstName?: string;
-  additionalDriverLastName?: string;
-  additionalDriverDOB?: string;
-  additionalDriverLicense?: string;
   vinNumber?: string;
   vehicleUse?: string;
   estimatedAnnualMileage?: number;
   occupation?: string;
   militaryService?: boolean;
   isStudent?: boolean;
+  extraDrivers?: QuoteInsertExtraDriver[];
+  extraVehicles?: QuoteInsertExtraVehicle[];
+  /** When set with `details_json` column, classifies the request (e.g. `auto`, `cyber`). */
+  quoteType?: string | null;
+  /** Type-specific fields for non-auto line quotes (JSON). */
+  detailsJson?: Record<string, unknown> | null;
 }): Promise<number> {
-  // First insert the record, then update quote_number based on the new ID
   const connection = await getConnection();
-  
+  const extraDrivers = quoteData.extraDrivers ?? [];
+  const extraVehicles = quoteData.extraVehicles ?? [];
+
   try {
     await connection.beginTransaction();
-    
+
     const insertSql = `
       INSERT INTO quote_requests (
-        user_id, first_name, last_name, date_of_birth, marital_status, gender,
+        user_id, quote_type, details_json,
+        first_name, last_name, date_of_birth, marital_status, gender,
         street_address, state, zip_code, phone_number, can_receive_texts,
         email_address, driver_license_number, social_security_number,
         additional_driver_first_name, additional_driver_last_name, additional_driver_dob,
         additional_driver_license, vin_number, vehicle_use, estimated_annual_mileage,
         occupation, military_service, is_student
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-  const params = [
-    quoteData.userId || null,  // Can be NULL for anonymous submissions
-    quoteData.firstName,
-    quoteData.lastName,
-    quoteData.dateOfBirth || null,
-    quoteData.maritalStatus || null,
-    quoteData.gender || null,
-    quoteData.streetAddress || null,
-    quoteData.state || null,
-    quoteData.zipCode || null,
-    quoteData.phoneNumber || null,
-    quoteData.canReceiveTexts || false,
-    quoteData.emailAddress || null,
-    quoteData.driverLicenseNumber || null,
-    quoteData.socialSecurityNumber || null,
-    quoteData.additionalDriverFirstName || null,
-    quoteData.additionalDriverLastName || null,
-    quoteData.additionalDriverDOB || null,
-    quoteData.additionalDriverLicense || null,
-    quoteData.vinNumber || null,
-    quoteData.vehicleUse || null,
-    quoteData.estimatedAnnualMileage || null,
-    quoteData.occupation || null,
-    quoteData.militaryService ?? false,
-    quoteData.isStudent || false,
-  ];
+    const detailsPayload =
+      quoteData.detailsJson != null && Object.keys(quoteData.detailsJson).length > 0
+        ? JSON.stringify(quoteData.detailsJson)
+        : null;
 
-    // Insert the record
+    const params = [
+      quoteData.userId || null,
+      quoteData.quoteType ?? "auto",
+      detailsPayload,
+      quoteData.firstName,
+      quoteData.lastName,
+      quoteData.dateOfBirth || null,
+      quoteData.maritalStatus || null,
+      quoteData.gender || null,
+      quoteData.streetAddress || null,
+      quoteData.state || null,
+      quoteData.zipCode || null,
+      quoteData.phoneNumber || null,
+      quoteData.canReceiveTexts || false,
+      quoteData.emailAddress || null,
+      quoteData.driverLicenseNumber || null,
+      quoteData.socialSecurityNumber || null,
+      null,
+      null,
+      null,
+      null,
+      quoteData.vinNumber || null,
+      quoteData.vehicleUse || null,
+      quoteData.estimatedAnnualMileage ?? null,
+      quoteData.occupation || null,
+      quoteData.militaryService ?? false,
+      quoteData.isStudent || false,
+    ];
+
     const [insertResult] = await connection.execute(insertSql, params);
     const insertId = (insertResult as mysql.ResultSetHeader).insertId;
-    
-    // Generate and update quote number
-    const quoteNumber = `QTE-${new Date().getFullYear()}-${String(insertId).padStart(6, '0')}`;
-    await connection.execute(
-      'UPDATE quote_requests SET quote_number = ? WHERE id = ?',
-      [quoteNumber, insertId]
-    );
-    
+
+    for (let i = 0; i < extraDrivers.length; i++) {
+      const d = extraDrivers[i]!;
+      await connection.execute(
+        `INSERT INTO quote_request_extra_drivers (
+          quote_request_id, sort_order, first_name, last_name, date_of_birth,
+          marital_status, gender, driver_license_number
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          insertId,
+          i,
+          d.firstName,
+          d.lastName,
+          d.dateOfBirth,
+          d.maritalStatus,
+          d.gender,
+          d.driverLicenseNumber,
+        ],
+      );
+    }
+
+    for (let j = 0; j < extraVehicles.length; j++) {
+      const v = extraVehicles[j]!;
+      await connection.execute(
+        `INSERT INTO quote_request_extra_vehicles (
+          quote_request_id, sort_order, vin_number, vehicle_use, estimated_annual_mileage
+        ) VALUES (?, ?, ?, ?, ?)`,
+        [insertId, j, v.vinNumber, v.vehicleUse, v.estimatedAnnualMileage],
+      );
+    }
+
+    const quoteNumber = `QTE-${new Date().getFullYear()}-${String(insertId).padStart(6, "0")}`;
+    await connection.execute("UPDATE quote_requests SET quote_number = ? WHERE id = ?", [
+      quoteNumber,
+      insertId,
+    ]);
+
     await connection.commit();
     return insertId;
-    
   } catch (error) {
     await connection.rollback();
     throw error;

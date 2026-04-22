@@ -62,7 +62,50 @@ CREATE TABLE IF NOT EXISTS `sessions` (
   INDEX `idx_expires_at` (`expires_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Insert default roles
+-- Align tables left behind by older mysql-init/setup-production-db.sql (CREATE IF NOT EXISTS skipped)
+SET @db := DATABASE();
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='users' AND COLUMN_NAME='email_verification_token')=0, 'ALTER TABLE `users` ADD COLUMN `email_verification_token` VARCHAR(255) NULL', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='users' AND COLUMN_NAME='password_reset_token')=0, 'ALTER TABLE `users` ADD COLUMN `password_reset_token` VARCHAR(255) NULL', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='users' AND COLUMN_NAME='password_reset_expires')=0, 'ALTER TABLE `users` ADD COLUMN `password_reset_expires` DATETIME NULL', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='roles' AND COLUMN_NAME='permissions')=0, 'ALTER TABLE `roles` ADD COLUMN `permissions` JSON NULL', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='roles' AND COLUMN_NAME='updated_at')=0, 'ALTER TABLE `roles` ADD COLUMN `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='user_roles' AND COLUMN_NAME='assigned_by')=0, 'ALTER TABLE `user_roles` ADD COLUMN `assigned_by` INT NULL', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='sessions' AND COLUMN_NAME='data')=0, 'ALTER TABLE `sessions` ADD COLUMN `data` JSON NULL', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sql := (SELECT IF((SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='sessions' AND COLUMN_NAME='last_accessed_at')=0, 'ALTER TABLE `sessions` ADD COLUMN `last_accessed_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP', 'SELECT 1'));
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+-- Insert default roles (upsert for rows already created by mysql-init INSERT IGNORE)
 INSERT INTO `roles` (`name`, `description`, `permissions`) VALUES 
 ('admin', 'Administrator with full system access', JSON_OBJECT(
   'users', JSON_ARRAY('create', 'read', 'update', 'delete'),
@@ -77,7 +120,11 @@ INSERT INTO `roles` (`name`, `description`, `permissions`) VALUES
 ('agent', 'Insurance agent with quote management access', JSON_OBJECT(
   'quotes', JSON_ARRAY('create', 'read', 'update'),
   'clients', JSON_ARRAY('create', 'read', 'update')
-));
+))
+ON DUPLICATE KEY UPDATE
+  `description` = VALUES(`description`),
+  `permissions` = VALUES(`permissions`),
+  `updated_at` = CURRENT_TIMESTAMP;
 
 -- DOWN
 DROP TABLE IF EXISTS `sessions`;

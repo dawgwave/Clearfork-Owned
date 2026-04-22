@@ -22,6 +22,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8080
+      - RUN_MIGRATIONS=true
     env_file:
       - .env.production
     restart: unless-stopped
@@ -41,6 +42,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=8081
+      - RUN_MIGRATIONS=true
     env_file:
       - .env.staging
     restart: "no"

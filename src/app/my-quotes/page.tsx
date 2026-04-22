@@ -16,6 +16,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { QUOTE_TYPE_LABEL } from "@/lib/quote-line-schemas";
 
 interface Quote {
   id: number;
@@ -26,6 +27,7 @@ interface Quote {
   email_address?: string;
   phone_number?: string;
   quote_number: string;
+  quote_type?: string | null;
   status: 'New' | 'In Review' | 'Quoted' | 'Accepted' | 'Declined' | 'Expired' | 'Cancelled';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   submitted_at: string;
@@ -148,11 +150,16 @@ export default function MyQuotesPage() {
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div>
-                        <CardTitle className="flex items-center gap-3">
+                        <CardTitle className="flex flex-wrap items-center gap-3">
                           {quote.quote_number}
                           <Badge className={STATUS_COLORS[quote.status]}>
                             {quote.status}
                           </Badge>
+                          {quote.quote_type ? (
+                            <Badge variant="outline" className="font-normal">
+                              {QUOTE_TYPE_LABEL[quote.quote_type] ?? quote.quote_type}
+                            </Badge>
+                          ) : null}
                         </CardTitle>
                         <CardDescription className="mt-2">
                           {STATUS_DESCRIPTIONS[quote.status]}

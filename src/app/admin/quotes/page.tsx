@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   FileText, 
-  Search, 
-  Filter,
+  Search,
   Eye,
   MessageSquare,
   Clock,
@@ -23,6 +22,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { QUOTE_TYPE_LABEL } from "@/lib/quote-line-schemas";
 
 interface Quote {
   id: number;
@@ -33,6 +33,7 @@ interface Quote {
   email_address?: string;
   phone_number?: string;
   quote_number: string;
+  quote_type?: string | null;
   status: 'New' | 'In Review' | 'Quoted' | 'Accepted' | 'Declined' | 'Expired' | 'Cancelled';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   internal_notes?: string;
@@ -88,6 +89,7 @@ export default function AdminQuotesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
+  const [quoteTypeFilter, setQuoteTypeFilter] = useState('');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -108,6 +110,7 @@ export default function AdminQuotesPage() {
       if (search) params.append('search', search);
       if (statusFilter) params.append('status', statusFilter);
       if (priorityFilter) params.append('priority', priorityFilter);
+      if (quoteTypeFilter) params.append('quote_type', quoteTypeFilter);
       
       const response = await fetch(`/api/admin/quotes?${params.toString()}`, {
         credentials: 'include'
@@ -131,7 +134,7 @@ export default function AdminQuotesPage() {
     if (user && user.roles.some(role => role.name === 'admin')) {
       fetchQuotes();
     }
-  }, [user, search, statusFilter, priorityFilter]);
+  }, [user, search, statusFilter, priorityFilter, quoteTypeFilter]);
 
   const handlePageChange = (newPage: number) => {
     fetchQuotes(newPage);
@@ -216,6 +219,25 @@ export default function AdminQuotesPage() {
                 <option value="normal">Normal</option>
                 <option value="high">High</option>
                 <option value="urgent">Urgent</option>
+              </select>
+
+              <select
+                value={quoteTypeFilter}
+                onChange={(e) => setQuoteTypeFilter(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">All quote types</option>
+                <option value="auto">Auto & home (full form)</option>
+                <option value="home">Homeowners / renters</option>
+                <option value="umbrella">Umbrella</option>
+                <option value="boat">Boat</option>
+                <option value="rv">RV</option>
+                <option value="atv">ATV / off-road</option>
+                <option value="motorcycle">Motorcycle</option>
+                <option value="commercial">Commercial</option>
+                <option value="life">Life</option>
+                <option value="cyber">Cyber</option>
+                <option value="performance_and_bid_bonds">Performance & bid bonds</option>
               </select>
             </div>
           </CardContent>
@@ -305,7 +327,7 @@ export default function AdminQuotesPage() {
                     <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="font-semibold mb-2">No quote requests found</h3>
                     <p className="text-muted-foreground">
-                      {search || statusFilter || priorityFilter
+                      {search || statusFilter || priorityFilter || quoteTypeFilter
                         ? "No quote requests match your current filters."
                         : "No quote requests have been submitted yet."
                       }

@@ -4,7 +4,7 @@
     b. (done) .ai/remove-chat.md
     c. (done) run app locally.
     d. (done) .ai/nocodb-to-mysql.md
-    e. (done) migrate from google cloud to digital ocean       
+    e. (done) production on DigitalOcean droplet (Docker)
 
 2. functionality:
     a. (done) .ai/cosmetic-changes.md 
@@ -28,3 +28,13 @@
 2. created test server
 ssh -N -L 127.0.0.1:3001:127.0.0.1:3001 root@67.205.157.124
 then http://127.0.0.1:3001
+
+4. changed /get-a-quote url to /get-auto-quote
+
+added:
+
+    a. allow adding multiple drivers
+    b. allow adding multiple vehicles
+
+Created database migrations and ran them.
+deployed to test server.
