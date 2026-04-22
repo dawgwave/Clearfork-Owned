@@ -43,7 +43,9 @@ clearfork-insurance/
   src/app/                        # Next.js App Router pages
     layout.tsx                    # Root layout, GA4, reCAPTCHA script, JSON-LD, AuthProvider
     page.tsx                      # Homepage (hero, content hub, services, contact)
-    get-a-quote/page.tsx          # AI-powered quote form (23 fields, file upload)
+    get-a-quote/page.tsx          # Quote entry: choose line (links to /get-*-quote + /get-auto-quote)
+    get-auto-quote/page.tsx       # Full personal auto/home form (23 fields, file upload) → quote_type `auto`
+    get-home-quote/ … get-cyber-quote/ # One page per line; short form → `details_json` + `quote_type`
     login/page.tsx                # User login page
     register/page.tsx             # User registration page
     profile/page.tsx              # User profile management
@@ -110,9 +112,12 @@ clearfork-insurance/
     20260419_160000_create_auth_tables.sql # User, role, session tables
   scripts/
     migrate.ts                    # Migration CLI script
+    migrate-package.json          # Minimal deps for Docker /migrate bundle
+    docker-entrypoint.sh          # Runs migrations then node server.js (Docker)
   public/images/                  # Static assets (photos, logos, SVGs)
   Dockerfile                      # Multi-stage standalone Docker build
-  cloudbuild.yaml                 # Cloud Build pipeline
+  scripts/deploy.sh               # Production deploy (Docker on droplet, branch main)
+  scripts/deploy-test.sh          # Test/staging deploy (see script for droplet IP)
 ```
 
 ## Key Features
@@ -199,29 +204,27 @@ tags: ["insurance", "tips"]
 
 ## Build & Deploy
 
-```bash
-# Build Docker image
-gcloud builds submit --tag us-central1-docker.pkg.dev/ludata-prod/cloud-run-source-deploy/clearfork-insurance:latest --project ludata-prod
+Production and test environments use a **DigitalOcean droplet** with Docker Compose (MySQL, Next.js app, Caddy). See `DEPLOYMENT.md` for firewall, DNS, and first-time setup.
 
-# Deploy to Cloud Run
-gcloud run deploy clearfork-insurance \
-  --image us-central1-docker.pkg.dev/ludata-prod/cloud-run-source-deploy/clearfork-insurance:latest \
-  --region us-central1 --project ludata-prod --allow-unauthenticated
+Docker images use **`scripts/docker-entrypoint.sh`**: when `RUN_MIGRATIONS=true` (default in `docker-compose.yml`), the container applies pending SQL from `migrations/` before starting `server.js`. Migrations run from an isolated `/migrate` dependency bundle so the Next.js standalone `node_modules` tree is unchanged.
+
+```bash
+npm run build
+
+# Production (allowed only from branch main; set DROPLET_IP or pass as arg)
+./scripts/deploy.sh docker YOUR_DROPLET_IP
+
+# Same-droplet “test” deploy (see scripts/deploy-test.sh): restarts the full Compose stack on that IP — production containers too if they share the host
+./scripts/deploy-test.sh docker
 ```
 
 ## Architecture
 
-- **GCP Project**: ludata-prod
-- **Cloud Run**: clearfork-insurance (us-central1)
-- **Load Balancer**: clearfork-url-map
-- **LB IP**: 34.36.4.221
-- **SSL**: Google-managed cert for clearforkinsurance.com + www
-- **CDN**: Cloud CDN enabled on backend service
-- **DNS**: GoDaddy (A record -> 34.36.4.221)
+- **Hosting**: DigitalOcean droplet(s), Docker Compose (`docker-compose.yml`, Caddy reverse proxy)
+- **DNS**: Point `clearforkinsurance.com` (and `www`) A records at the production droplet’s public IP; Caddy obtains Let’s Encrypt certificates when DNS is correct
 
 ## External Services
 
-- **NocoDB**: `data.levelingupdata.com` — quote submission storage
 - **Google reCAPTCHA v3**: Form spam protection
 - **Google Analytics 4**: Site analytics
 

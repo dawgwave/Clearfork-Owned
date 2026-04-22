@@ -1,0 +1,9 @@
+{
+  "name": "clearfork-migrate-bundle",
+  "private": true,
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "mysql2": "^3.11.8",
+    "tsx": "^4.19.2"
+  }
+}

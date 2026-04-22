@@ -70,10 +70,6 @@ Object.assign(SNAKE_TO_CAMEL, {
   phone_number: "phoneNumber",
   email_address: "emailAddress",
   social_security_number: "socialSecurityNumber",
-  additional_driver_first_name: "additionalDriverFirstName",
-  additional_driver_last_name: "additionalDriverLastName",
-  additional_driver_dob: "additionalDriverDOB",
-  additional_driver_license: "additionalDriverLicense",
   vin: "vinNumber",
   vin_number: "vinNumber",
   vehicle_use: "vehicleUse",
@@ -84,6 +80,7 @@ Object.assign(SNAKE_TO_CAMEL, {
 function buildExtractionResponseSchema(): ObjectSchema {
   const updateProps: Record<string, Schema> = {};
   for (const k of QUOTE_FORM_FIELD_KEYS) {
+    if (k === "extraDrivers" || k === "extraVehicles") continue;
     updateProps[k] = {
       type: SchemaType.STRING,
       nullable: true,
@@ -139,8 +136,8 @@ DRIVERS (first row = primary unless labeled otherwise):
 - driverLicenseNumber from DL, license #, operator license columns.
 - socialSecurityNumber only if explicitly printed (never invent digits).
 
-ADDITIONAL DRIVER:
-- If a second driver row exists, map to additionalDriverFirstName, additionalDriverLastName, additionalDriverDOB, additionalDriverLicense.
+ADDITIONAL DRIVERS / VEHICLES (multi-row):
+- Document upload cannot set extraDrivers or extraVehicles arrays. Fill the primary driver and first vehicle only; the user can add more drivers/vehicles on the form.
 
 VEHICLES:
 - vinNumber: 17-character VIN if present.

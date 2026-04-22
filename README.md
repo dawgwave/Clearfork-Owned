@@ -1,6 +1,6 @@
 # Clearfork Insurance — clearforkinsurance.com
 
-Production website for **SIG Clearfork Insurance Group**, an independent insurance agency in Benbrook, TX. Built with Next.js 16, deployed on Google Cloud Run.
+Production website for **SIG Clearfork Insurance Group**, an independent insurance agency in Benbrook, TX. Built with Next.js 16, deployed on a **DigitalOcean** droplet (Docker Compose: MySQL, Next.js standalone, Caddy).
 
 ## Quick Start
 
@@ -17,7 +17,7 @@ Create `.env.local` with the following:
 | Variable | Description |
 |---|---|
 | `GEMINI_API_KEY` | Google Generative AI key (Gemini 2.0 Flash) for the quote assistant |
-| `NOCODB_API_TOKEN` | NocoDB API token for quote submission storage |
+| `NOCODB_API_TOKEN` | Legacy NocoDB token (optional; quotes use MySQL) |
 | `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` | Google reCAPTCHA v3 public site key |
 | `RECAPTCHA_SECRET_KEY` | Google reCAPTCHA v3 server secret |
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 measurement ID |
@@ -40,7 +40,8 @@ src/
   app/                           # Next.js App Router pages & API routes
     layout.tsx                   # Root layout (GA4, reCAPTCHA, JSON-LD)
     page.tsx                     # Homepage
-    get-a-quote/                 # AI-powered quote form
+    get-a-quote/                 # Quote type selector → form & line pages
+    get-auto-quote/              # AI-powered personal quote form
     our-story/                   # Company story
     about/                       # Meet Our Team
     home-auto-insurance/         # Personal lines
@@ -50,10 +51,10 @@ src/
     cyber-insurance/             # Cyber insurance
     videos/                      # Video gallery
     podcast/                     # Podcast page
-    blogs/                       # Blog index + [slug] + RSS
+    blog/                        # Blog index + [slug] + RSS
     privacy/                     # Privacy policy
     api/contact/                 # Contact form endpoint
-    api/quote-submit/            # Quote submission to NocoDB
+    api/quote-submit/            # Quote submission
     api/quote-assistant/         # Gemini AI assistant endpoint
     api/recaptcha/               # reCAPTCHA verification
     sitemap.ts                   # Dynamic sitemap.xml
@@ -63,105 +64,54 @@ src/
 content/posts/                   # Blog posts (MDX files)
 public/images/                   # Static assets
 Dockerfile                       # Multi-stage standalone Docker build
-cloudbuild.yaml                  # Cloud Build CI/CD pipeline
+scripts/deploy.sh                # Production deploy to droplet (branch main)
+scripts/deploy-test.sh           # Test droplet deploy
+DEPLOYMENT.md                    # Droplet setup, Caddy, firewall, DNS
 ```
 
 ## Build & Deploy
 
-### Automatic (CI/CD)
+### Production (DigitalOcean)
 
-A **Cloud Build trigger** (`clearfork-insurance-deploy`) runs on every push to `main`:
-
-1. Builds the Docker image
-2. Pushes to Artifact Registry (`us-central1-docker.pkg.dev/ludata-prod/cloud-run-source-deploy/clearfork-insurance`)
-3. Deploys to Cloud Run
-
-No manual steps required — just push to `main`.
-
-### Manual Deploy
+From the repo root, on branch `main`, with SSH access to the droplet:
 
 ```bash
-# Option 1: Trigger full pipeline via Cloud Build
-gcloud builds submit --config=cloudbuild.yaml --project=ludata-prod \
-  --substitutions=SHORT_SHA=$(git rev-parse --short HEAD)
-
-# Option 2: Build and deploy separately
-gcloud builds submit \
-  --tag us-central1-docker.pkg.dev/ludata-prod/cloud-run-source-deploy/clearfork-insurance:latest \
-  --project ludata-prod
-
-gcloud run deploy clearfork-insurance \
-  --image us-central1-docker.pkg.dev/ludata-prod/cloud-run-source-deploy/clearfork-insurance:latest \
-  --region us-central1 --project ludata-prod --allow-unauthenticated
+npm run build
+./scripts/deploy.sh docker YOUR_DROPLET_IP
 ```
 
-### Local Production Build
+Details: `DEPLOYMENT.md` (Caddy on 80/443, `.env.production` on the server, MySQL in Compose). With Docker Compose, **`RUN_MIGRATIONS=true`** runs pending DB migrations in the app container before the Next.js server starts (see `scripts/docker-entrypoint.sh`).
+
+### Test / staging droplet
+
+```bash
+./scripts/deploy-test.sh docker
+```
+
+(Default IP is in `scripts/deploy-test.sh`; override with a second argument if needed.)
+
+### Local production build
 
 ```bash
 npm run build        # Next.js standalone build
 npx next start       # http://localhost:3000
 ```
 
-## GCP Architecture
+## DNS (example: GoDaddy)
 
-| Component | Details |
-|---|---|
-| **GCP Project** | `ludata-prod` |
-| **Cloud Run Service** | `clearfork-insurance` (us-central1) |
-| **Cloud Build Trigger** | `clearfork-insurance-deploy` — auto-deploys on push to `main` |
-| **Load Balancer** | `clearfork-url-map` |
-| **Static IP** | `34.36.4.221` |
-| **SSL** | Google-managed cert for `clearforkinsurance.com` + `www` |
-| **CDN** | Cloud CDN enabled on backend service |
-| **Artifact Registry** | `us-central1-docker.pkg.dev/ludata-prod/cloud-run-source-deploy` |
+Point the apex (`@`) and `www` **A records** at your **production droplet’s public IPv4**. Caddy on the droplet terminates TLS (Let’s Encrypt) once DNS resolves to that host. For IP-only checks before DNS, see `DEPLOYMENT.md` (`Caddyfile.ip-only`).
 
-## DNS Configuration (GoDaddy)
+## Production environment (droplet)
 
-The domain `clearforkinsurance.com` is managed at GoDaddy. Required DNS records:
-
-| Type | Name | Value |
-|---|---|---|
-| **A** | `@` | `34.36.4.221` |
-| **CNAME** | `www` | `clearforkinsurance.com` |
-
-These point to the GCP global load balancer, which routes traffic to Cloud Run and terminates SSL via the Google-managed certificate.
-
-## Cloud Run Environment Variables
-
-Set these on the Cloud Run service (via Console or CLI):
-
-```bash
-gcloud run services update clearfork-insurance \
-  --region us-central1 --project ludata-prod \
-  --set-env-vars="NODE_ENV=production,GEMINI_API_KEY=...,NOCODB_API_TOKEN=...,NEXT_PUBLIC_RECAPTCHA_SITE_KEY=...,RECAPTCHA_SECRET_KEY=...,NEXT_PUBLIC_GA_ID=...,GOOGLE_SITE_VERIFICATION=..."
-```
+Configure secrets in `/opt/clearfork-insurance/.env.production` on the server (created or synced by `scripts/deploy.sh` — do not commit real values). Typical keys match `AGENTS.md` / `.env.local.example`: `JWT_SECRET`, `DB_*` or compose-aligned names, `GEMINI_API_KEY`, reCAPTCHA, `NEXT_PUBLIC_GA_ID`, etc.
 
 ## External Services
 
 | Service | URL / Host | Purpose |
 |---|---|---|
-| **NocoDB** | `data.levelingupdata.com` | Quote submission storage |
 | **Google reCAPTCHA v3** | — | Form spam protection |
 | **Google Analytics 4** | — | Site analytics |
 | **Google Search Console** | — | SEO monitoring |
-
-## Adding Blog Posts
-
-Create `content/posts/<slug>.mdx`:
-
-```yaml
----
-title: "Post Title"
-date: "2026-01-15"
-description: "Short description for SEO"
-author: "Clearfork Insurance"
-tags: ["insurance", "tips"]
----
-
-Your markdown content here...
-```
-
-The post will appear in the blog index, sitemap, and RSS feed automatically.
 
 ## SEO
 
@@ -170,7 +120,7 @@ The post will appear in the blog index, sitemap, and RSS feed automatically.
 - BlogPosting schemas on blog posts
 - BreadcrumbList schemas on all interior pages
 - Dynamic `sitemap.xml` and `robots.txt`
-- RSS feed at `/blogs/rss.xml`
+- RSS feed at `/blog/rss.xml`
 - Per-page metadata with Open Graph and Twitter cards
 - Google Analytics 4 via `NEXT_PUBLIC_GA_ID`
 - Google Search Console via `GOOGLE_SITE_VERIFICATION`

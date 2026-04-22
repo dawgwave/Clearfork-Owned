@@ -5,3 +5,21 @@
 :80 {
 	reverse_proxy clearfork-app:8080
 }
+
+# Staging (see deploy/Caddyfile for notes; RFC1918 = host/bridge to container, ssh -L, etc.)
+:3001 {
+	@allowed {
+		remote_ip 127.0.0.1
+		remote_ip ::1
+		remote_ip 10.0.0.0/8
+		remote_ip 172.16.0.0/12
+		remote_ip 192.168.0.0/16
+		remote_ip {$CADDY_STAGING_IP:217.30.74.35}
+	}
+	handle @allowed {
+		reverse_proxy clearfork-app-staging:8081
+	}
+	handle {
+		respond "Forbidden" 403
+	}
+}

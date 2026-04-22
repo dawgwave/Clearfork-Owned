@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
         status: searchParams.get('status') || undefined,
         priority: searchParams.get('priority') || undefined,
         search: searchParams.get('search') || undefined,
+        quote_type: searchParams.get('quote_type') || undefined,
         assigned_agent_id: searchParams.get('assigned_agent_id') ? 
           parseInt(searchParams.get('assigned_agent_id')!) : undefined,
       };

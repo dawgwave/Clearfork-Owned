@@ -55,7 +55,7 @@ ${QUOTE_KEYS.map((k) => `${k}: ${QUOTE_FIELD_LABELS[k]}`).join("\n")}
 
 Required fields (must be non-empty strings for completed=true): firstName, lastName, dateOfBirth, maritalStatus, gender, streetAddress, state, zipCode, phoneNumber, emailAddress, driverLicenseNumber.
 
-Optional fields: canReceiveTexts, socialSecurityNumber, additionalDriverFirstName, additionalDriverLastName, additionalDriverDOB, additionalDriverLicense, vinNumber, vehicleUse, estimatedAnnualMileage, occupation, militaryService, isStudent.
+Optional fields: canReceiveTexts, socialSecurityNumber, vinNumber, vehicleUse, estimatedAnnualMileage, occupation, militaryService, isStudent. (extraDrivers/extraVehicles are not set via chat — use the form.)
 
 Rules:
 - Infer updates from the user's latest message; merge logically with current form state mentally.

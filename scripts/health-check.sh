@@ -51,7 +51,7 @@ fi
 # Check specific pages
 echo ""
 echo "📄 Page Health Checks"
-pages=("/" "/blog" "/get-a-quote" "/login")
+pages=("/" "/blog" "/get-a-quote" "/get-auto-quote" "/login")
 for page in "${pages[@]}"; do
     status=$(curl -s -o /dev/null -w "%{http_code}" "http://$DROPLET_IP$page" --connect-timeout 5 || echo "000")
     if [[ "$status" == "200" ]]; then

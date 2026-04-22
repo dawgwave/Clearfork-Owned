@@ -9,11 +9,22 @@ export interface Migration {
   down: string;
 }
 
-/**
- * Ensure migrations table exists
- */
-async function ensureMigrationsTable(): Promise<void> {
-  const createTableSQL = `
+function migrateDbConfig() {
+  return {
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '3306', 10),
+    database:
+      process.env.DB_DATABASE ||
+      process.env.DB_NAME ||
+      'clearfork-insurance',
+    user: process.env.DB_USERNAME || process.env.DB_USER || 'clearfork_user',
+    password: process.env.DB_PASSWORD || '',
+    ssl: process.env.DB_SSL === 'true' ? {} : false,
+    charset: 'utf8mb4',
+  };
+}
+
+const APP_MIGRATIONS_DDL = `
     CREATE TABLE IF NOT EXISTS migrations (
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
@@ -21,22 +32,50 @@ async function ensureMigrationsTable(): Promise<void> {
       INDEX idx_executed_at (executed_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `;
-  
-  // Use direct connection to avoid warnings
+
+/**
+ * mysql-init/setup-production-db.sql used a legacy ledger (INT id, applied_at).
+ * The app expects VARCHAR id + executed_at. Rename legacy away and create the app table once.
+ */
+async function ensureMigrationsTable(): Promise<void> {
   const mysql = require('mysql2/promise');
-  const config = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    database: process.env.DB_DATABASE || 'clearfork-insurance',
-    user: process.env.DB_USERNAME || 'clearfork_user',
-    password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL === 'true' ? {} : false,
-    charset: 'utf8mb4',
-  };
-  
+  const config = migrateDbConfig();
   const connection = await mysql.createConnection(config);
   try {
-    await connection.execute(createTableSQL);
+    const [tables] = await connection.query(
+      `SELECT TABLE_NAME FROM information_schema.TABLES
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'migrations'`,
+    );
+    if (!(tables as { TABLE_NAME: string }[]).length) {
+      await connection.query(APP_MIGRATIONS_DDL);
+      return;
+    }
+
+    const [cols] = await connection.query(
+      `SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'migrations'`,
+    );
+    const byName = new Map(
+      (cols as { COLUMN_NAME: string; DATA_TYPE: string }[]).map((c) => [
+        c.COLUMN_NAME,
+        c.DATA_TYPE,
+      ]),
+    );
+    const idType = byName.get('id');
+    const hasLedger =
+      byName.has('executed_at') &&
+      (idType === 'varchar' || idType === 'char');
+
+    if (hasLedger) {
+      return;
+    }
+
+    console.warn(
+      '⚠️  Replacing legacy migrations table (INT id / applied_at) with app schema; old table -> migrations_legacy_deprecated',
+    );
+    await connection.query('DROP TABLE IF EXISTS migrations_legacy_deprecated');
+    await connection.query('RENAME TABLE migrations TO migrations_legacy_deprecated');
+    await connection.query(APP_MIGRATIONS_DDL);
   } finally {
     await connection.end();
   }
@@ -48,19 +87,8 @@ async function ensureMigrationsTable(): Promise<void> {
 async function getExecutedMigrations(): Promise<string[]> {
   await ensureMigrationsTable();
   
-  // Use direct connection to avoid warnings
   const mysql = require('mysql2/promise');
-  const config = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    database: process.env.DB_DATABASE || 'clearfork-insurance',
-    user: process.env.DB_USERNAME || 'clearfork_user',
-    password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL === 'true' ? {} : false,
-    charset: 'utf8mb4',
-  };
-  
-  const connection = await mysql.createConnection(config);
+  const connection = await mysql.createConnection(migrateDbConfig());
   try {
     const [rows] = await connection.execute('SELECT id FROM migrations ORDER BY executed_at ASC');
     return (rows as { id: string }[]).map(row => row.id);
@@ -74,17 +102,7 @@ async function getExecutedMigrations(): Promise<string[]> {
  */
 async function markMigrationExecuted(id: string, name: string): Promise<void> {
   const mysql = require('mysql2/promise');
-  const config = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    database: process.env.DB_DATABASE || 'clearfork-insurance',
-    user: process.env.DB_USERNAME || 'clearfork_user',
-    password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL === 'true' ? {} : false,
-    charset: 'utf8mb4',
-  };
-  
-  const connection = await mysql.createConnection(config);
+  const connection = await mysql.createConnection(migrateDbConfig());
   try {
     await connection.execute('INSERT INTO migrations (id, name) VALUES (?, ?)', [id, name]);
   } finally {
@@ -97,17 +115,7 @@ async function markMigrationExecuted(id: string, name: string): Promise<void> {
  */
 async function removeMigrationRecord(id: string): Promise<void> {
   const mysql = require('mysql2/promise');
-  const config = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    database: process.env.DB_DATABASE || 'clearfork-insurance',
-    user: process.env.DB_USERNAME || 'clearfork_user',
-    password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL === 'true' ? {} : false,
-    charset: 'utf8mb4',
-  };
-  
-  const connection = await mysql.createConnection(config);
+  const connection = await mysql.createConnection(migrateDbConfig());
   try {
     await connection.execute('DELETE FROM migrations WHERE id = ?', [id]);
   } finally {
@@ -137,7 +145,10 @@ async function loadMigrationFiles(): Promise<Migration[]> {
         throw new Error(`Invalid migration format in ${file}. Expected UP and DOWN sections separated by "-- DOWN"`);
       }
       
-      const up = parts[0].replace(/^-- UP\s*\n?/m, '').trim();
+      // Strip only a marker line that is exactly `-- UP` (optionally trailing spaces).
+      // Do not use `-- UP: …` on the same line — `/^-- UP\s*\n?/m` would match `-- UP`
+      // and leave `: …` as bogus SQL.
+      const up = parts[0].replace(/^-- UP\s*$/m, '').trim();
       const down = parts[1].trim();
       
       // Extract ID from filename (format: YYYYMMDD_HHMMSS_name.sql)
@@ -169,19 +180,8 @@ async function loadMigrationFiles(): Promise<Migration[]> {
  * Execute a SQL statement with multiple queries
  */
 async function executeMultipleStatements(sql: string): Promise<void> {
-  // Use direct connection to avoid pool configuration warnings
   const mysql = require('mysql2/promise');
-  const config = {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '3306'),
-    database: process.env.DB_DATABASE || 'clearfork-insurance',
-    user: process.env.DB_USERNAME || 'clearfork_user',
-    password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL === 'true' ? {} : false,
-    charset: 'utf8mb4',
-  };
-  
-  const connection = await mysql.createConnection(config);
+  const connection = await mysql.createConnection(migrateDbConfig());
   try {
     // Split by semicolons but be careful about semicolons in strings
     const statements = sql
@@ -191,7 +191,8 @@ async function executeMultipleStatements(sql: string): Promise<void> {
     
     for (const statement of statements) {
       if (statement.trim()) {
-        await connection.execute(statement);
+        // query(), not execute(): DDL / PREPARE / DEALLOCATE are not supported on the PS protocol.
+        await connection.query(statement);
       }
     }
   } finally {

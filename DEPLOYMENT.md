@@ -67,6 +67,43 @@ cd /home/godev/WebstormProjects/Clearfork-Insurance
 
 ## After Deployment
 
+### Single droplet: fix production first
+
+Production and staging often share **one** machine and **one** Compose project under `/opt/clearfork-insurance`:
+
+| Traffic | Service |
+|--------|---------|
+| **:80 / :443** (public site) | `caddy` → `clearfork-app` (`.env.production`) |
+| **:3001** (staging / tunnel) | `caddy` → `clearfork-app-staging` (`.env.staging`, profile `staging`) |
+| **MySQL** | `mysql` (both apps use it; different DB names in env files) |
+
+**`./scripts/deploy-test.sh`** still runs **`docker compose down` + `up` for the whole project** on the IP you pass — that **restarts production as well**, not “test only”. Use **`./scripts/deploy.sh docker …` from `main`** when you only want to ship production.
+
+**When the public site is down, recover production before staging:**
+
+```bash
+ssh root@YOUR_DROPLET_IP
+cd /opt/clearfork-insurance
+
+# Optional: stop staging so logs and CPU are easier to read (does not stop prod)
+./staging off 2>/dev/null || true
+
+# Core stack (prod + DB + Caddy). Use `docker compose` or `docker-compose` to match the server.
+docker compose up -d mysql clearfork-app caddy
+
+docker compose ps
+docker compose logs --tail=100 clearfork-app
+docker compose logs --tail=50 caddy
+```
+
+If **`clearfork-app` keeps restarting**, the entrypoint is likely stuck on **migrations**. Inspect the log tail, fix SQL/schema, redeploy a corrected image, or temporarily set **`RUN_MIGRATIONS=false`** for **`clearfork-app`** in `docker-compose.yml` on the server only as a last resort to get HTTP 200 back, then fix the DB and turn migrations on again.
+
+After prod responds on **:80**, bring staging back if you need **:3001**:
+
+```bash
+./staging on
+```
+
 ### Check Status
 ```bash
 # SSH into droplet
@@ -108,7 +145,9 @@ Docker deploy runs **Caddy** on **80** and **443**, reverse-proxying to the Next
 ## Database Setup
 
 ### Docker Deployment
-Database runs automatically in MySQL container.
+Database runs automatically in the MySQL container.
+
+**Schema migrations:** When `RUN_MIGRATIONS=true` (default in `docker-compose.yml` for `clearfork-app` and `clearfork-app-staging`), the app container entrypoint runs `scripts/migrate.ts up` (same runner as `npm run migrate` locally) after retries until MySQL accepts connections. To skip (e.g. debugging), set `RUN_MIGRATIONS=false` for that service. For a legacy DB whose `migrations` ledger table does not match `src/lib/migrations.ts`, fix the table or apply SQL manually before relying on auto-migrate.
 
 ### Direct deployment (PM2) and ports
 

@@ -23,11 +23,40 @@ import {
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { QUOTE_TYPE_LABEL } from "@/lib/quote-line-schemas";
+
+function parseDetailsJson(raw: unknown): Record<string, string> | null {
+  if (raw == null || raw === "") return null;
+  let obj: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      obj = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof obj !== "object" || obj === null || Array.isArray(obj)) return null;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    if (v === null || v === undefined) continue;
+    out[k] = typeof v === "object" ? JSON.stringify(v) : String(v);
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+function humanFieldKey(key: string): string {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}
 
 interface QuoteDetails {
   id: number;
   user_id?: number;
   assigned_agent_id?: number;
+  quote_type?: string | null;
+  details_json?: unknown;
   first_name: string;
   last_name: string;
   date_of_birth?: string;
@@ -60,6 +89,21 @@ interface QuoteDetails {
   user_email?: string;
   user_name?: string;
   agent_name?: string;
+  extra_drivers?: Array<{
+    id: number;
+    first_name: string;
+    last_name: string;
+    date_of_birth: string | null;
+    marital_status: string | null;
+    gender: string | null;
+    driver_license_number: string | null;
+  }>;
+  extra_vehicles?: Array<{
+    id: number;
+    vin_number: string;
+    vehicle_use: string | null;
+    estimated_annual_mileage: number | null;
+  }>;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -328,8 +372,39 @@ export default function AdminQuoteDetailPage() {
                 </CardContent>
               </Card>
 
+              {(() => {
+                const details = parseDetailsJson(quote.details_json);
+                if (!details) return null;
+                return (
+                  <Card className="lg:col-span-2">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Line-specific answers
+                      </CardTitle>
+                      <CardDescription>
+                        Submitted on the {QUOTE_TYPE_LABEL[quote.quote_type ?? ""] ?? quote.quote_type ?? "—"} form.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <dl className="grid gap-4 sm:grid-cols-2">
+                        {Object.entries(details).map(([key, val]) => (
+                          <div key={key}>
+                            <dt className="text-sm font-medium text-muted-foreground">
+                              {humanFieldKey(key)}
+                            </dt>
+                            <dd className="mt-1 whitespace-pre-wrap text-sm">{val}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
               {/* Vehicle Information */}
-              {(quote.vin_number || quote.vehicle_use || quote.estimated_annual_mileage) && (
+              {(quote.vin_number || quote.vehicle_use || quote.estimated_annual_mileage) &&
+                quote.vin_number !== "LINEQUOTE-PENDING" && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -356,6 +431,33 @@ export default function AdminQuoteDetailPage() {
                       <div>
                         <label className="text-sm font-medium text-muted-foreground">Annual Mileage</label>
                         <p>{quote.estimated_annual_mileage.toLocaleString()} miles</p>
+                      </div>
+                    )}
+                    {quote.extra_vehicles && quote.extra_vehicles.length > 0 && (
+                      <div className="pt-2 border-t space-y-4">
+                        {quote.extra_vehicles.map((ev, idx) => (
+                          <div key={ev.id} className="rounded-md border p-3 bg-muted/30">
+                            <p className="text-sm font-semibold mb-2">Additional vehicle {idx + 1}</p>
+                            {ev.vin_number && (
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">VIN</label>
+                                <p className="font-mono text-sm">{ev.vin_number}</p>
+                              </div>
+                            )}
+                            {ev.vehicle_use && (
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">Use</label>
+                                <p>{ev.vehicle_use}</p>
+                              </div>
+                            )}
+                            {ev.estimated_annual_mileage != null && (
+                              <div>
+                                <label className="text-sm font-medium text-muted-foreground">Annual mileage</label>
+                                <p>{Number(ev.estimated_annual_mileage).toLocaleString()} miles</p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </CardContent>
@@ -390,31 +492,68 @@ export default function AdminQuoteDetailPage() {
               )}
             </div>
 
-            {/* Additional Driver Information */}
-            {(quote.additional_driver_first_name || quote.additional_driver_last_name) && (
+            {/* Additional drivers (legacy single row or new many) */}
+            {((quote.additional_driver_first_name || quote.additional_driver_last_name) ||
+              (quote.extra_drivers && quote.extra_drivers.length > 0)) && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Additional Driver</CardTitle>
+                  <CardTitle>Additional drivers</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Name</label>
-                    <p>{quote.additional_driver_first_name} {quote.additional_driver_last_name}</p>
-                  </div>
-                  
-                  {quote.additional_driver_dob && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
-                      <p>{new Date(quote.additional_driver_dob).toLocaleDateString()}</p>
+                <CardContent className="space-y-6">
+                  {(quote.additional_driver_first_name || quote.additional_driver_last_name) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-md border p-3">
+                      <p className="text-sm font-medium col-span-2">Legacy single additional driver (older quotes)</p>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Name</label>
+                        <p>{quote.additional_driver_first_name} {quote.additional_driver_last_name}</p>
+                      </div>
+                      {quote.additional_driver_dob && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
+                          <p>{new Date(quote.additional_driver_dob).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {quote.additional_driver_license && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">License Number</label>
+                          <p className="font-mono text-sm">{quote.additional_driver_license}</p>
+                        </div>
+                      )}
                     </div>
                   )}
-                  
-                  {quote.additional_driver_license && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">License Number</label>
-                      <p className="font-mono text-sm">{quote.additional_driver_license}</p>
+                  {quote.extra_drivers?.map((ed, idx) => (
+                    <div key={ed.id} className="grid grid-cols-1 md:grid-cols-2 gap-4 rounded-md border p-3 bg-muted/30">
+                      <p className="text-sm font-semibold col-span-2">Driver {idx + 2} (additional)</p>
+                      <div>
+                        <label className="text-sm font-medium text-muted-foreground">Name</label>
+                        <p>{ed.first_name} {ed.last_name}</p>
+                      </div>
+                      {ed.date_of_birth && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Date of Birth</label>
+                          <p>{new Date(ed.date_of_birth).toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {ed.marital_status && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Marital status</label>
+                          <p>{ed.marital_status}</p>
+                        </div>
+                      )}
+                      {ed.gender && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Gender</label>
+                          <p>{ed.gender}</p>
+                        </div>
+                      )}
+                      {ed.driver_license_number && (
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">License</label>
+                          <p className="font-mono text-sm">{ed.driver_license_number}</p>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </CardContent>
               </Card>
             )}

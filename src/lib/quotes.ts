@@ -10,6 +10,10 @@ export interface Quote {
   email_address?: string;
   phone_number?: string;
   quote_number: string;
+  /** e.g. `auto`, `cyber`, `home` — see `QUOTE_TYPE_LABEL` in quote-line-schemas. */
+  quote_type?: string | null;
+  /** Line-quote type-specific answers (JSON). */
+  details_json?: unknown;
   status: 'New' | 'In Review' | 'Quoted' | 'Accepted' | 'Declined' | 'Expired' | 'Cancelled';
   priority: 'low' | 'normal' | 'high' | 'urgent';
   internal_notes?: string;
@@ -40,6 +44,31 @@ export interface QuoteWithDetails extends Quote {
   user_email?: string;
   user_name?: string;
   agent_name?: string;
+  extra_drivers?: QuoteExtraDriverRow[];
+  extra_vehicles?: QuoteExtraVehicleRow[];
+}
+
+export interface QuoteExtraDriverRow {
+  id: number;
+  quote_request_id: number;
+  sort_order: number;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string | null;
+  marital_status: string | null;
+  gender: string | null;
+  driver_license_number: string | null;
+  created_at: string;
+}
+
+export interface QuoteExtraVehicleRow {
+  id: number;
+  quote_request_id: number;
+  sort_order: number;
+  vin_number: string;
+  vehicle_use: string | null;
+  estimated_annual_mileage: number | null;
+  created_at: string;
 }
 
 export interface Chat {
@@ -99,6 +128,7 @@ export async function getAllQuotes(options: {
   priority?: string;
   search?: string;
   assigned_agent_id?: number;
+  quote_type?: string;
 } = {}): Promise<{ quotes: QuoteWithDetails[]; total: number; hasMore: boolean }> {
   const {
     page = 1,
@@ -106,7 +136,8 @@ export async function getAllQuotes(options: {
     status,
     priority,
     search,
-    assigned_agent_id
+    assigned_agent_id,
+    quote_type,
   } = options;
   
   const offset = (page - 1) * limit;
@@ -127,7 +158,12 @@ export async function getAllQuotes(options: {
     whereConditions.push('q.assigned_agent_id = ?');
     params.push(assigned_agent_id);
   }
-  
+
+  if (quote_type) {
+    whereConditions.push('q.quote_type = ?');
+    params.push(quote_type);
+  }
+
   if (search) {
     whereConditions.push(`(
       q.quote_number LIKE ? OR 
@@ -185,7 +221,7 @@ export async function getUserQuotes(userId: number): Promise<Quote[]> {
   const quotes = await query<Quote>(
     `SELECT 
       id, user_id, assigned_agent_id, first_name, last_name, email_address, 
-      phone_number, quote_number, status, priority, submitted_at, updated_at
+      phone_number, quote_number, quote_type, status, priority, submitted_at, updated_at
     FROM quote_requests 
     WHERE user_id = ? 
     ORDER BY submitted_at DESC`,
@@ -218,7 +254,21 @@ export async function getQuoteById(quoteId: number, includePersonalData = false)
     [quoteId]
   );
   
-  return quotes.length > 0 ? quotes[0] : null;
+  if (quotes.length === 0) return null;
+  const row = quotes[0]!;
+  const [extra_drivers, extra_vehicles] = await Promise.all([
+    query<QuoteExtraDriverRow>(
+      "SELECT * FROM quote_request_extra_drivers WHERE quote_request_id = ? ORDER BY sort_order ASC, id ASC",
+      [quoteId]
+    ),
+    query<QuoteExtraVehicleRow>(
+      "SELECT * FROM quote_request_extra_vehicles WHERE quote_request_id = ? ORDER BY sort_order ASC, id ASC",
+      [quoteId]
+    ),
+  ]);
+  row.extra_drivers = extra_drivers;
+  row.extra_vehicles = extra_vehicles;
+  return row;
 }
 
 /**

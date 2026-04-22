@@ -101,7 +101,6 @@ function validateFieldValue(
   const v = value.trim();
   switch (fieldKey) {
     case "dateOfBirth":
-    case "additionalDriverDOB":
       if (!/\d/.test(v) || /^[a-zA-Z\s]+$/.test(v))
         return "Please enter a valid date (MM/DD/YYYY).";
       return null;

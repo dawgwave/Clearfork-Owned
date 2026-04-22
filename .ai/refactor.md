@@ -4,7 +4,7 @@
     b. (done) .ai/remove-chat.md
     c. (done) run app locally.
     d. (done) .ai/nocodb-to-mysql.md
-    e. (done) migrate from google cloud to digital ocean       
+    e. (done) production on DigitalOcean droplet (Docker)
 
 2. functionality:
     a. (done) .ai/cosmetic-changes.md 
@@ -17,6 +17,24 @@
         xx. "User Management" section
     j. (done) allow image uploads in blogs management 
     f. (done) for registered users, prefill "get a quote" form with data from the user's profile
+    g. (done) moved domain name from godaddy & changed DNS record to point to new server 
+    h. (done) pointed protectdfw.com to clearfork
+    i. (done) https
+    j. (done) check if vlogs and podcasts will auto show new videos and podcasts - NO they do not
+    k. (done) clean up test blogs
+    l. (done) fix file upload on blog
 
-    g. https
-    h. email verification
+3. updated prod deployment script to deploy only from main
+2. created test server
+ssh -N -L 127.0.0.1:3001:127.0.0.1:3001 root@67.205.157.124
+then http://127.0.0.1:3001
+
+4. changed /get-a-quote url to /get-auto-quote
+
+added:
+
+    a. allow adding multiple drivers
+    b. allow adding multiple vehicles
+
+Created database migrations and ran them.
+deployed to test server.
