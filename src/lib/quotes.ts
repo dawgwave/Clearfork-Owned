@@ -272,6 +272,24 @@ export async function getQuoteById(quoteId: number, includePersonalData = false)
 }
 
 /**
+ * Permanently remove a quote request and dependent rows (FK CASCADE: chats, extras, etc.).
+ */
+export async function deleteQuoteRequest(quoteId: number): Promise<boolean> {
+  const connection = await getConnection();
+  try {
+    const [result] = await connection.execute('DELETE FROM quote_requests WHERE id = ?', [
+      quoteId,
+    ]) as any;
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Failed to delete quote request:', error);
+    return false;
+  } finally {
+    connection.release();
+  }
+}
+
+/**
  * Update quote status and create audit log
  */
 export async function updateQuoteStatus(
