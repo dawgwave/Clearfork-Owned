@@ -41,3 +41,4 @@ deployed to test server.
 
 5. (done) vlog and podcast management pages
 
+6. (done) test server setup and eventual deconstruction - will move to Dave's new server
