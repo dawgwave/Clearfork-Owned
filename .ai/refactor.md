@@ -29,7 +29,7 @@
 ssh -N -L 127.0.0.1:3001:127.0.0.1:3001 root@67.205.157.124
 then http://127.0.0.1:3001
 
-4. changed /get-a-quote url to /get-auto-quote
+4. (done) changed /get-a-quote url to /get-auto-quote
 
 added:
 
@@ -38,3 +38,6 @@ added:
 
 Created database migrations and ran them.
 deployed to test server.
+
+5. (done) vlog and podcast management pages
+

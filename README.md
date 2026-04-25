@@ -65,7 +65,6 @@ content/posts/                   # Blog posts (MDX files)
 public/images/                   # Static assets
 Dockerfile                       # Multi-stage standalone Docker build
 scripts/deploy.sh                # Production deploy to droplet (branch main)
-scripts/deploy-test.sh           # Test droplet deploy
 DEPLOYMENT.md                    # Droplet setup, Caddy, firewall, DNS
 ```
 
@@ -81,14 +80,6 @@ npm run build
 ```
 
 Details: `DEPLOYMENT.md` (Caddy on 80/443, `.env.production` on the server, MySQL in Compose). With Docker Compose, **`RUN_MIGRATIONS=true`** runs pending DB migrations in the app container before the Next.js server starts (see `scripts/docker-entrypoint.sh`).
-
-### Test / staging droplet
-
-```bash
-./scripts/deploy-test.sh docker
-```
-
-(Default IP is in `scripts/deploy-test.sh`; override with a second argument if needed.)
 
 ### Local production build
 

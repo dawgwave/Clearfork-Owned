@@ -17,7 +17,8 @@ import {
   Phone,
   Mail,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -90,6 +91,7 @@ export default function AdminQuotesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [quoteTypeFilter, setQuoteTypeFilter] = useState('');
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -138,6 +140,31 @@ export default function AdminQuotesPage() {
 
   const handlePageChange = (newPage: number) => {
     fetchQuotes(newPage);
+  };
+
+  const handleDeleteQuote = async (quoteId: number, quoteNumber: string) => {
+    if (
+      !window.confirm(
+        `Permanently delete quote ${quoteNumber}? Related chat and history will be removed. This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    try {
+      setDeletingId(quoteId);
+      const response = await fetch(`/api/admin/quotes/${quoteId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Delete failed");
+      }
+      await fetchQuotes(pagination.page);
+    } catch {
+      window.alert("Failed to delete quote. Check the console or try again.");
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (loading) {
@@ -302,7 +329,7 @@ export default function AdminQuotesPage() {
                         </div>
                       </div>
                       
-                      <div className="flex gap-2 ml-4">
+                      <div className="flex flex-wrap gap-2 ml-4">
                         <Button variant="outline" size="sm" asChild>
                           <Link href={`/admin/quotes/${quote.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
@@ -314,6 +341,16 @@ export default function AdminQuotesPage() {
                             <MessageSquare className="h-4 w-4 mr-1" />
                             Chat
                           </Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive hover:bg-destructive/10"
+                          disabled={deletingId === quote.id}
+                          onClick={() => handleDeleteQuote(quote.id, quote.quote_number)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          {deletingId === quote.id ? "…" : "Delete"}
                         </Button>
                       </div>
                     </div>

@@ -117,7 +117,6 @@ clearfork-insurance/
   public/images/                  # Static assets (photos, logos, SVGs)
   Dockerfile                      # Multi-stage standalone Docker build
   scripts/deploy.sh               # Production deploy (Docker on droplet, branch main)
-  scripts/deploy-test.sh          # Test/staging deploy (see script for droplet IP)
 ```
 
 ## Key Features
@@ -204,18 +203,15 @@ tags: ["insurance", "tips"]
 
 ## Build & Deploy
 
-Production and test environments use a **DigitalOcean droplet** with Docker Compose (MySQL, Next.js app, Caddy). See `DEPLOYMENT.md` for firewall, DNS, and first-time setup.
+Production uses a **DigitalOcean droplet** with Docker Compose (MySQL, Next.js app, Caddy). See `DEPLOYMENT.md` for firewall, DNS, and first-time setup.
 
 Docker images use **`scripts/docker-entrypoint.sh`**: when `RUN_MIGRATIONS=true` (default in `docker-compose.yml`), the container applies pending SQL from `migrations/` before starting `server.js`. Migrations run from an isolated `/migrate` dependency bundle so the Next.js standalone `node_modules` tree is unchanged.
 
 ```bash
 npm run build
 
-# Production (allowed only from branch main; set DROPLET_IP or pass as arg)
+# Production (set DROPLET_IP or pass as arg)
 ./scripts/deploy.sh docker YOUR_DROPLET_IP
-
-# Same-droplet “test” deploy (see scripts/deploy-test.sh): restarts the full Compose stack on that IP — production containers too if they share the host
-./scripts/deploy-test.sh docker
 ```
 
 ## Architecture

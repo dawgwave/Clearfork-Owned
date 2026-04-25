@@ -6,6 +6,14 @@ import { Breadcrumbs } from "@/components/breadcrumbs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { 
   ArrowLeft,
   MessageSquare,
@@ -18,7 +26,8 @@ import {
   Car,
   Briefcase,
   Clock,
-  Edit
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -130,6 +139,8 @@ export default function AdminQuoteDetailPage() {
   const [quote, setQuote] = useState<QuoteDetails | null>(null);
   const [loading_quote, setLoadingQuote] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -172,6 +183,26 @@ export default function AdminQuoteDetailPage() {
       fetchQuote();
     }
   }, [user, params.id]);
+
+  const handleConfirmDelete = async () => {
+    if (!quote) return;
+    try {
+      setDeleting(true);
+      const response = await fetch(`/api/admin/quotes/${quote.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Delete failed");
+      }
+      setDeleteOpen(false);
+      router.push("/admin/quotes");
+    } catch {
+      window.alert("Failed to delete quote.");
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -236,6 +267,26 @@ export default function AdminQuoteDetailPage() {
           </div>
         ) : quote ? (
           <div className="space-y-6">
+            <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete quote request?</DialogTitle>
+                  <DialogDescription>
+                    This permanently removes {quote.quote_number} and related chat, drivers/vehicles
+                    rows, and history. This cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleting}>
+                    {deleting ? "Deleting…" : "Delete"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -269,6 +320,10 @@ export default function AdminQuoteDetailPage() {
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Chat
                   </Link>
+                </Button>
+                <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
                 </Button>
               </div>
             </div>

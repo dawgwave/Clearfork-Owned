@@ -1,6 +1,4 @@
 ---------------------------------------------------------------
-- vlog management page (same as blog management page)
-
 - google account sign in
 - apple account sign in
 

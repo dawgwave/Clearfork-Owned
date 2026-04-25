@@ -13,7 +13,9 @@ import {
   Settings, 
   BarChart3,
   Shield,
-  AlertCircle
+  AlertCircle,
+  Video,
+  Headphones
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -129,6 +131,18 @@ export default function AdminDashboard() {
                 <Link href="/admin/blogs">
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Manage Blog Posts
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="w-full">
+                <Link href="/admin/vlogs">
+                  <Video className="h-4 w-4 mr-2" />
+                  Manage Vlogs
+                </Link>
+              </Button>
+              <Button variant="outline" asChild className="w-full">
+                <Link href="/admin/podcasts">
+                  <Headphones className="h-4 w-4 mr-2" />
+                  Manage Podcasts
                 </Link>
               </Button>
             </CardContent>

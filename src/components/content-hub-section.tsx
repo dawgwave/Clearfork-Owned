@@ -6,7 +6,10 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PageShell } from "@/components/page-shell";
 import { cn } from "@/lib/utils";
-import { INSURANCE_PODCASTS_HOME } from "@/data/insurance-podcasts";
+import {
+  INSURANCE_PODCASTS_HOME,
+  type InsurancePodcastShowcase,
+} from "@/data/insurance-podcasts";
 import type { PodcastEpisode, PodcastFeedResult } from "@/types/podcast-feed";
 
 const img = (path: string) => encodeURI(path);
@@ -27,7 +30,16 @@ export type HomeBlogPreview = {
 const ytThumb = (id: string) =>
   `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
 
-const VIDEO_ITEMS = [
+export type ContentHubVlogItem = {
+  title: string;
+  excerpt: string;
+  videoId: string;
+  image: string;
+  author: string;
+  avatar: string;
+};
+
+const HUB_VIDEOS_FALLBACK: ContentHubVlogItem[] = [
   {
     title:
       "My Homeowners Insurance Increased My Coverage Without My Permission",
@@ -57,7 +69,7 @@ const VIDEO_ITEMS = [
     author: "The Insurance Blackbox",
     avatar: img("/images/leslie dolman headshot_1761004385329.jpg"),
   },
-] as const;
+];
 
 type ModalState =
   | { kind: "video"; videoId: string; title: string }
@@ -86,9 +98,18 @@ const PODCAST_HUB_FALLBACK_AVATAR = img(
 
 export default function ContentHubSection({
   blogPosts = [],
+  vlogItems,
+  firstPodcastShowcase,
 }: {
   blogPosts?: HomeBlogPreview[];
+  /** When empty or omitted, static fallback is used. */
+  vlogItems?: ContentHubVlogItem[];
+  firstPodcastShowcase?: InsurancePodcastShowcase | null;
 }) {
+  const hubVlogItems =
+    vlogItems && vlogItems.length > 0 ? vlogItems : HUB_VIDEOS_FALLBACK;
+  const featuredPodcast =
+    firstPodcastShowcase ?? INSURANCE_PODCASTS_HOME[0];
   const [modal, setModal] = useState<ModalState>(null);
   const [rssHubItems, setRssHubItems] = useState<PodcastEpisode[]>([]);
   const [rssHubChannel, setRssHubChannel] = useState<string | undefined>();
@@ -211,7 +232,7 @@ export default function ContentHubSection({
               Short explainers on coverage and planning.
             </p>
             <ul className="mt-8 space-y-8">
-              {VIDEO_ITEMS.map((v) => (
+              {hubVlogItems.map((v) => (
                 <li key={v.videoId}>
                   <button
                     type="button"
@@ -284,30 +305,27 @@ export default function ContentHubSection({
               Conversations on risk, protection, and peace of mind.
             </p>
             <ul className="mt-8 space-y-8">
-              {/* Always show first static podcast */}
-              <li key={INSURANCE_PODCASTS_HOME[0].id}>
+              <li key={featuredPodcast.id}>
                 <button
                   type="button"
                   onClick={() => {
-                    const firstPodcast = INSURANCE_PODCASTS_HOME[0];
-                    const hasAudio =
-                      firstPodcast.audioUrl &&
-                      firstPodcast.audioUrl.trim().length > 0;
+                    const p = featuredPodcast;
+                    const hasAudio = p.audioUrl && p.audioUrl.trim().length > 0;
                     setModal(
                       hasAudio
                         ? {
                             kind: "podcast",
                             variant: "rss",
-                            title: firstPodcast.title,
-                            excerpt: firstPodcast.excerpt,
-                            audioUrl: firstPodcast.audioUrl!,
+                            title: p.title,
+                            excerpt: p.excerpt,
+                            audioUrl: p.audioUrl!,
                           }
                         : {
                             kind: "podcast",
                             variant: "link",
-                            title: firstPodcast.title,
-                            excerpt: firstPodcast.excerpt,
-                            listenUrl: firstPodcast.listenUrl,
+                            title: p.title,
+                            excerpt: p.excerpt,
+                            listenUrl: p.listenUrl,
                           },
                     );
                   }}
@@ -315,7 +333,7 @@ export default function ContentHubSection({
                 >
                   <div className="relative aspect-[16/10] overflow-hidden rounded-lg">
                     <Image
-                      src={INSURANCE_PODCASTS_HOME[0].image}
+                      src={featuredPodcast.image}
                       alt=""
                       fill
                       className="object-cover transition duration-300 hover:scale-[1.02]"
@@ -333,15 +351,15 @@ export default function ContentHubSection({
                     </span>
                   </div>
                   <h3 className="mt-4 text-lg font-semibold text-[var(--navy)]">
-                    {INSURANCE_PODCASTS_HOME[0].title}
+                    {featuredPodcast.title}
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-[var(--slate)]">
-                    {INSURANCE_PODCASTS_HOME[0].excerpt}
+                    {featuredPodcast.excerpt}
                   </p>
                   <div className="mt-4 flex items-center gap-3">
                     <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2 ring-white">
                       <Image
-                        src={INSURANCE_PODCASTS_HOME[0].avatar}
+                        src={featuredPodcast.avatar}
                         alt=""
                         fill
                         className="object-cover"
@@ -349,8 +367,8 @@ export default function ContentHubSection({
                       />
                     </div>
                     <p className="text-xs font-semibold text-[var(--navy)]">
-                      {INSURANCE_PODCASTS_HOME[0].authorName},{" "}
-                      {INSURANCE_PODCASTS_HOME[0].authorSubtitle}
+                      {featuredPodcast.authorName},{" "}
+                      {featuredPodcast.authorSubtitle}
                     </p>
                   </div>
                 </button>

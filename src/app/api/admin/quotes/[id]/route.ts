@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-middleware';
-import { getQuoteById, updateQuoteStatus, assignQuote } from '@/lib/quotes';
+import { getQuoteById, updateQuoteStatus, assignQuote, deleteQuoteRequest } from '@/lib/quotes';
 
 export async function GET(
   request: NextRequest,
@@ -121,6 +121,35 @@ export async function PATCH(
         { error: 'Failed to update quote' },
         { status: 500 }
       );
+    }
+  });
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  return requireAdmin(request, async () => {
+    try {
+      const { id } = await params;
+      const quoteId = parseInt(id, 10);
+
+      if (Number.isNaN(quoteId)) {
+        return NextResponse.json({ error: 'Invalid quote ID' }, { status: 400 });
+      }
+
+      const ok = await deleteQuoteRequest(quoteId);
+      if (!ok) {
+        return NextResponse.json(
+          { error: 'Quote not found or could not be deleted' },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Admin quote delete error:', error);
+      return NextResponse.json({ error: 'Failed to delete quote' }, { status: 500 });
     }
   });
 }

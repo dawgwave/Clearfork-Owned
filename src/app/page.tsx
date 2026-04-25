@@ -1,5 +1,6 @@
 import HeroSection from "@/components/hero-section";
 import ContentHubSection, {
+  type ContentHubVlogItem,
   type HomeBlogPreview,
 } from "@/components/content-hub-section";
 import ServicesSection from "@/components/services-section";
@@ -9,6 +10,9 @@ import CtaSection from "@/components/cta-section";
 import ContactSection from "@/components/contact-section";
 import { getAllBlogPosts } from "@/lib/blog";
 import type { BlogPostWithAuthor } from "@/lib/blog";
+import { getAllVlogs } from "@/lib/vlogs";
+import { toVlogPublicCard } from "@/lib/vlog-card";
+import { getAllPodcastShowcases, rowToShowcase } from "@/lib/podcast-showcases";
 
 /** No DB at `next build` in Docker; render on the server when a request hits prod. */
 export const dynamic = "force-dynamic";
@@ -52,10 +56,38 @@ export default async function HomePage() {
   );
   const homeBlogPosts = latestPosts.map(toHomeBlogPreview);
 
+  const { vlogs: hubVlogs } = await getAllVlogs(
+    { published_only: true },
+    { page: 1, limit: 3 },
+  );
+  const vlogItems: ContentHubVlogItem[] = hubVlogs.map((v) => {
+    const c = toVlogPublicCard(v);
+    return {
+      title: c.title,
+      excerpt: c.excerpt,
+      videoId: c.videoEmbedId,
+      image: c.imageSrc,
+      author: c.authorName,
+      avatar: c.authorAvatarSrc,
+    };
+  });
+
+  const { showcases: firstPodcastRows } = await getAllPodcastShowcases(
+    { published_only: true },
+    { page: 1, limit: 1 },
+  );
+  const firstPodcastShowcase = firstPodcastRows[0]
+    ? rowToShowcase(firstPodcastRows[0])
+    : null;
+
   return (
     <>
       <HeroSection />
-      <ContentHubSection blogPosts={homeBlogPosts} />
+      <ContentHubSection
+        blogPosts={homeBlogPosts}
+        vlogItems={vlogItems}
+        firstPodcastShowcase={firstPodcastShowcase}
+      />
       <ServicesSection />
       <HowItWorksSection />
       <AboutSection />
