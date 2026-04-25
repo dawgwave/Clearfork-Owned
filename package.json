@@ -12,6 +12,7 @@
     "migrate:status": "tsx scripts/migrate.ts status",
     "migrate:down": "tsx scripts/migrate.ts down",
     "migrate:create": "tsx scripts/migrate.ts create",
+    "hash-password": "tsx scripts/hash-password-for-mysql.ts",
     "postinstall": "npm run migrate"
   },
   "dependencies": {
