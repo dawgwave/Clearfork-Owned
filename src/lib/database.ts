@@ -59,6 +59,16 @@ export async function getConnection(): Promise<mysql.PoolConnection> {
   return await pool.getConnection();
 }
 
+/** MySQL ER_NO_SUCH_TABLE — used to degrade gracefully before migrations run. */
+export function isMysqlNoSuchTableError(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "errno" in e &&
+    (e as { errno?: number }).errno === 1146
+  );
+}
+
 /**
  * Execute a query with automatic connection management
  */

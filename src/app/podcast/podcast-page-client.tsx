@@ -181,7 +181,7 @@ export type PodcastPageClientProps =
   | { mode: "static"; items: InsurancePodcastShowcase[] }
   | {
       mode: "hybrid";
-      firstItem: InsurancePodcastShowcase;
+      curatedItems: InsurancePodcastShowcase[];
       rssEpisodes: PodcastEpisode[];
     };
 
@@ -248,15 +248,20 @@ export function PodcastPageClient(props: PodcastPageClientProps) {
               </div>
             )
           ) : props.mode === "hybrid" ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
-              <StaticPodcastCard
-                key={props.firstItem.id}
-                item={props.firstItem}
-              />
-              {props.rssEpisodes.map((item) => (
-                <RssEpisodeCard key={item.id} item={item} />
-              ))}
-            </div>
+            props.curatedItems.length === 0 && props.rssEpisodes.length === 0 ? (
+              <p className="text-center text-muted-foreground">
+                No podcast episodes to display right now.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
+                {props.curatedItems.map((item) => (
+                  <StaticPodcastCard key={item.id} item={item} />
+                ))}
+                {props.rssEpisodes.map((item) => (
+                  <RssEpisodeCard key={item.id} item={item} />
+                ))}
+              </div>
+            )
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
               {props.items.map((item) => (

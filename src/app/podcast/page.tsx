@@ -1,35 +1,47 @@
-import { INSURANCE_PODCAST_SHOWCASES } from "@/data/insurance-podcasts";
 import {
   fetchMergedPodcastEpisodes,
   getPodcastRssUrls,
   PODCAST_PAGE_EPISODE_LIMIT,
   type PodcastEpisode,
 } from "@/lib/podcast-rss";
+import {
+  getAllPodcastShowcases,
+  rowToShowcase,
+} from "@/lib/podcast-showcases";
 import { PodcastPageClient } from "./podcast-page-client";
+import type { InsurancePodcastShowcase } from "@/data/insurance-podcasts";
+
+export const dynamic = "force-dynamic";
 
 export default async function PodcastPage() {
-  // Always show the first static podcast (with audio player)
-  const firstPodcast = INSURANCE_PODCAST_SHOWCASES[0];
+  let curatedItems: InsurancePodcastShowcase[] = [];
+  try {
+    const { showcases } = await getAllPodcastShowcases(
+      { published_only: true },
+      { page: 1, limit: 50 },
+    );
+    curatedItems = showcases.map(rowToShowcase);
+  } catch {
+    curatedItems = [];
+  }
 
   const urls = getPodcastRssUrls();
   let rssEpisodes: PodcastEpisode[] = [];
+  const rssCap = Math.max(0, PODCAST_PAGE_EPISODE_LIMIT - curatedItems.length);
 
   try {
-    // Fetch RSS episodes (limit - 1 to account for the first static podcast)
-    const data = await fetchMergedPodcastEpisodes(
-      urls,
-      PODCAST_PAGE_EPISODE_LIMIT - 1,
-    );
-    rssEpisodes = data.items;
+    if (urls.length > 0 && rssCap > 0) {
+      const data = await fetchMergedPodcastEpisodes(urls, rssCap);
+      rssEpisodes = data.items;
+    }
   } catch {
-    // If RSS fails, just show the static podcast
     rssEpisodes = [];
   }
 
   return (
     <PodcastPageClient
       mode="hybrid"
-      firstItem={firstPodcast}
+      curatedItems={curatedItems}
       rssEpisodes={rssEpisodes}
     />
   );
