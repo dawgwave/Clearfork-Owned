@@ -13,27 +13,3 @@ clearforkinsurance.com, www.clearforkinsurance.com {
 :80 {
 	reverse_proxy clearfork-app:8080
 }
-
-# Staging: same host, different port. Start app with: ./staging on
-# CADDY_STAGING_IP is set in docker-compose. Stopped container => 502 for allowed IP.
-# ssh -L local:3001: remote to 127.0.0.1:3001 still sees 403 without the RFC1918 range below: Docker
-# does not show the client as 127.0.0.1 to the caddy container — it is usually the host on the bridge (e.g. 172.18.0.1).
-:3001 {
-	@allowed {
-		remote_ip 127.0.0.1
-		remote_ip ::1
-		remote_ip 10.0.0.0/8
-		remote_ip 172.16.0.0/12
-		remote_ip 192.168.0.0/16
-		# Carrier-grade NAT / Tailscale-style 100.x (often seen via VPN tunnels)
-		remote_ip 100.64.0.0/10
-		remote_ip {$CADDY_STAGING_IP:217.30.74.35}
-	}
-	handle @allowed {
-		# Staging is optional; same Docker network (profile `staging` must be up or 502 here).
-		reverse_proxy clearfork-app-staging:8081
-	}
-	handle {
-		respond "Forbidden" 403
-	}
-}

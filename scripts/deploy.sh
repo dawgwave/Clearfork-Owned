@@ -8,7 +8,6 @@ set -e  # Exit on any error
 # Configuration
 # Production deploys only from this branch (override e.g. CLEARFORK_PRODUCTION_BRANCH=master)
 CLEARFORK_PRODUCTION_BRANCH="${CLEARFORK_PRODUCTION_BRANCH:-main}"
-# Staging/test deploy: set CLEARFORK_DEPLOY_STAGING=1 (see scripts/deploy-test.sh)
 DROPLET_USER="root"  # Change if you use a different user
 DROPLET_IP="${2:-}"  # Second argument or prompt
 DEPLOY_TYPE="${1:-docker}"  # First argument or default to docker
@@ -29,19 +28,17 @@ success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 warn() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
 
-# Branch guard (optional): require deploy machine checkout == CLEARFORK_PRODUCTION_BRANCH for non-staging deploys.
+# Branch guard (optional): require deploy machine checkout == CLEARFORK_PRODUCTION_BRANCH.
 # Commented out so emergency deploys can run from any branch — re-enable if you want main-only production deploys.
-# if [[ -z "${CLEARFORK_DEPLOY_STAGING:-}" ]]; then
-#     if ! git -C "$(dirname "$0")/.." rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-#         error "Not a git repository (expected repo root as parent of scripts/)."
-#     fi
-#     REPO_ROOT="$(git -C "$(dirname "$0")/.." rev-parse --show-toplevel)"
-#     CURRENT_BRANCH="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-#     if [[ "$CURRENT_BRANCH" != "$CLEARFORK_PRODUCTION_BRANCH" ]]; then
-#         error "Production deploy is only allowed from branch '${CLEARFORK_PRODUCTION_BRANCH}'. Current branch: '${CURRENT_BRANCH:-unknown}'. Merge your work to ${CLEARFORK_PRODUCTION_BRANCH}, checkout that branch, and retry. For test/staging deploys, use: ./scripts/deploy-test.sh"
-#     fi
-#     log "Git branch OK for production: $CLEARFORK_PRODUCTION_BRANCH"
+# if ! git -C "$(dirname "$0")/.." rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+#     error "Not a git repository (expected repo root as parent of scripts/)."
 # fi
+# REPO_ROOT="$(git -C "$(dirname "$0")/.." rev-parse --show-toplevel)"
+# CURRENT_BRANCH="$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+# if [[ "$CURRENT_BRANCH" != "$CLEARFORK_PRODUCTION_BRANCH" ]]; then
+#     error "Production deploy is only allowed from branch '${CLEARFORK_PRODUCTION_BRANCH}'. Current branch: '${CURRENT_BRANCH:-unknown}'."
+# fi
+# log "Git branch OK for production: $CLEARFORK_PRODUCTION_BRANCH"
 
 # Get droplet IP if not provided
 if [[ -z "$DROPLET_IP" ]]; then
@@ -98,11 +95,8 @@ deploy_docker() {
     scp docker-compose.yml \
         deploy/Caddyfile \
         deploy/Caddyfile.ip-only \
-        deploy/staging.env.example \
         "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/" || error "Config transfer failed"
-    scp scripts/staging.sh "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/staging" || error "staging control script transfer failed"
     scp -r mysql-init "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/" || error "mysql-init transfer failed"
-    ssh "$DROPLET_USER@$DROPLET_IP" "chmod +x $REMOTE_DIR/staging"
     
     # Copy environment file (only if it doesn't exist on server)
     log "Checking environment configuration..."
@@ -136,14 +130,6 @@ EOF
         log "Production environment file already exists on server - not overwriting"
     fi
 
-    if ! ssh "$DROPLET_USER@$DROPLET_IP" "test -f $REMOTE_DIR/.env.staging"; then
-        log "No .env.staging on server — scp from deploy/staging.env.example (edit secrets)"
-        scp "deploy/staging.env.example" "$DROPLET_USER@$DROPLET_IP:$REMOTE_DIR/.env.staging" || error "Failed to create .env.staging"
-        warn "Update $REMOTE_DIR/.env.staging (JWT, API keys). If MySQL was already initialized, apply mysql-init/99-staging-database.sql once before first staging app start (staging container runs migrations on boot)."
-    else
-        log "Staging .env.staging already exists on server - not overwriting"
-    fi
-
     # Start services
     log "Starting services..."
     ssh "$DROPLET_USER@$DROPLET_IP" "
@@ -152,14 +138,6 @@ EOF
         docker-compose up -d
     " || error "Service startup failed"
 
-    # Test droplet only (deploy-test.sh sets CLEARFORK_DEPLOY_STAGING=1): compose does not start profile `staging` by default.
-    if [[ -n "${CLEARFORK_DEPLOY_STAGING:-}" ]]; then
-        log "Starting staging app on :3001 (./staging on)..."
-        if ! ssh "$DROPLET_USER@$DROPLET_IP" "cd $REMOTE_DIR && ./staging on"; then
-            warn "Staging failed to start — on the server run: cd $REMOTE_DIR && ./staging on"
-        fi
-    fi
-    
     success "Docker deployment completed"
 }
 
@@ -236,21 +214,16 @@ main() {
     fi
 
     success "Deployment completed successfully!"
-    if [[ -n "${CLEARFORK_DEPLOY_STAGING:-}" ]]; then
-        log "Staging/test site (HTTP): http://$DROPLET_IP/"
-        warn "This is a non-production target; restrict access (firewall / reverse proxy) as needed."
-    else
-        log "Public site (HTTP): http://$DROPLET_IP/"
-        log "HTTPS (after DNS): https://clearforkinsurance.com/"
-        warn "If DNS is not pointed at this droplet yet, use deploy/Caddyfile.ip-only on the server (see DEPLOYMENT.md)."
-    fi
+    log "Public site (HTTP): http://$DROPLET_IP/"
+    log "HTTPS (after DNS): https://clearforkinsurance.com/"
+    warn "If DNS is not pointed at this droplet yet, use deploy/Caddyfile.ip-only on the server (see DEPLOYMENT.md)."
 
     # Show deployment status (one ssh per command — avoids multiline quoting and Docker {{.Names}} brace expansion)
     log "Checking deployment status..."
     echo "=== System Status ==="
     ssh "$DROPLET_USER@$DROPLET_IP" "echo 'Docker containers:' && docker ps" || true
     ssh "$DROPLET_USER@$DROPLET_IP" "command -v pm2 >/dev/null 2>&1 && echo 'PM2 processes:' && pm2 list" || true
-    ssh "$DROPLET_USER@$DROPLET_IP" "echo 'Listening ports:' && (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ':80|:443|:8080|:3001' || echo 'No matching listen rows (or ss/netstat missing).'"
+    ssh "$DROPLET_USER@$DROPLET_IP" "echo 'Listening ports:' && (ss -tlnp 2>/dev/null || netstat -tlnp 2>/dev/null) | grep -E ':80|:443|:8080' || echo 'No matching listen rows (or ss/netstat missing).'"
 }
 
 # Run main function

@@ -1,9 +1,8 @@
 -- Dev / recovery: two accounts (bcrypt 12 rounds, matches app).
 -- Change passwords after use on any real host; do not commit real production creds.
 --
--- Usage (use the same database as DB_DATABASE in .env.production or .env.staging):
+-- Usage (use the same database as DB_DATABASE in .env.production):
 --   docker compose exec -i mysql mysql -u clearfork_user -p clearfork-insurance < scripts/seed-dev-users.sql
---   docker compose exec -i mysql mysql -u clearfork_user -p clearfork-insurance-staging < scripts/seed-dev-users.sql
 --
 --   z@z.com                      role: user   password: team-wOrk1
 --   admin@clearforkinsurance.com role: admin password: password123
