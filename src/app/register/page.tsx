@@ -8,7 +8,16 @@ export const metadata: Metadata = {
   description: "Create your Clearfork Insurance account to access personalized features and manage your quotes.",
 };
 
+function oauthFlags() {
+  return {
+    google:
+      !!process.env.GOOGLE_CLIENT_ID && !!process.env.GOOGLE_CLIENT_SECRET,
+    apple: !!process.env.APPLE_ID && !!process.env.APPLE_SECRET,
+  };
+}
+
 export default function RegisterPage() {
+  const { google, apple } = oauthFlags();
   return (
     <PageShell>
       <Breadcrumbs
@@ -19,7 +28,7 @@ export default function RegisterPage() {
       />
       
       <div className="flex min-h-[calc(100vh-200px)] items-center justify-center py-12">
-        <RegisterForm />
+        <RegisterForm oauthGoogle={google} oauthApple={apple} />
       </div>
     </PageShell>
   );

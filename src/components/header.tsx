@@ -21,6 +21,7 @@ const INSURANCE_LINKS = [
 const ABOUT_LINKS = [
   { label: "Our Story", href: "/our-story" },
   { label: "Meet Our Team", href: "/about" },
+  { label: "Privacy Policy", href: "/privacy" },
 ] as const;
 
 const CONTENT_LINKS = [

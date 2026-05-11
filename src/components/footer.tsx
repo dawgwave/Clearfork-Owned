@@ -24,6 +24,7 @@ const ABOUT = [
   { label: "Our Story", href: "/our-story" },
   { label: "Meet Our Team", href: "/about" },
   { label: "Blog", href: "/blog" },
+  { label: "Privacy Policy", href: "/privacy" },
 ] as const;
 
 const SOCIAL = [

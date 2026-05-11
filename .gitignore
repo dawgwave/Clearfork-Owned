@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# Google OAuth credential downloads (e.g. client_secret_<id>-<suffix>.apps.googleusercontent.com.json)
+client_secret_*.json
+
 # vercel
 .vercel
 

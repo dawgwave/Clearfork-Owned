@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 
 interface User {
   id: number;
@@ -165,6 +166,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         method: 'POST',
         credentials: 'include',
       });
+      await signOut({ redirect: false });
     } catch (error) {
       console.error('Logout error:', error);
     } finally {

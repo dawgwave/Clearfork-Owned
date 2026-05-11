@@ -31,7 +31,27 @@ JWT_SECRET=your_jwt_secret_64_chars_long
 GEMINI_API_KEY=your_google_gemini_key
 NEXT_PUBLIC_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
 RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
+
+# OAuth (Google / Apple via NextAuth) — see also .ai/oauth.md
+NEXTAUTH_URL=https://clearforkinsurance.com   # must match public site origin you use for login
+NEXTAUTH_SECRET=                             # strong random (e.g. openssl rand -base64 32)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+# APPLE_ID=
+# APPLE_SECRET=
 ```
+
+**Deploy script behavior:** `scripts/deploy.sh` copies `.env.production` to the droplet **only if** `/opt/clearfork-insurance/.env.production` does not exist yet. If the file already exists, it is **not** overwritten — SSH in and edit it, then recreate the app container:
+
+```bash
+ssh root@YOUR_DROPLET_IP
+nano /opt/clearfork-insurance/.env.production
+cd /opt/clearfork-insurance && docker compose up -d clearfork-app
+```
+
+**Google Cloud:** On the same Web OAuth client you use locally, add **Authorized redirect URIs** for production (and keep localhost if you still test locally), e.g. `https://clearforkinsurance.com/api/auth/callback/google` and `https://www.clearforkinsurance.com/api/auth/callback/google` if both hosts are live.
+
+**Apple:** Add the same production return URLs on your Services ID if you enable Apple on prod.
 
 ### 2. Test SSH Connection
 ```bash

@@ -30,6 +30,8 @@ export interface AuthError {
   field?: string;
 }
 
+export type OAuthProviderId = 'google' | 'apple';
+
 // Configuration
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -152,6 +154,15 @@ export async function authenticateUser(email: string, password: string): Promise
     }
 
     const user = users[0];
+
+    if (user.password_hash == null) {
+      return {
+        error: {
+          message: 'This email uses Google or Apple sign-in. Use that button on the login page.',
+          field: 'email',
+        },
+      };
+    }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password_hash);
@@ -276,4 +287,109 @@ export async function removeRole(userId: number, roleName: string): Promise<bool
     console.error('Remove role error:', error);
     return false;
   }
+}
+
+function splitName(name: string | null | undefined): { first: string; last: string } {
+  if (!name || !name.trim()) return { first: '', last: '' };
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return { first: parts[0], last: '' };
+  return { first: parts[0], last: parts.slice(1).join(' ') };
+}
+
+/**
+ * Create or find user for OAuth (Google / Apple). Links to an existing email+password user when the email matches.
+ */
+export async function findOrCreateOAuthUser(args: {
+  provider: OAuthProviderId;
+  providerAccountId: string;
+  email: string;
+  name?: string | null;
+  givenName?: string | null;
+  familyName?: string | null;
+}): Promise<UserWithRoles> {
+  const email = args.email.toLowerCase().trim();
+  if (!email) {
+    throw new Error('OAuth sign-in did not return an email');
+  }
+
+  const first =
+    (args.givenName && String(args.givenName).trim()) ||
+    (args.name ? splitName(args.name).first : '') ||
+    '';
+  const last =
+    (args.familyName && String(args.familyName).trim()) ||
+    (args.name ? splitName(args.name).last : '') ||
+    '';
+
+  const existingLink = await query<{ user_id: number }>(
+    'SELECT user_id FROM oauth_accounts WHERE provider = ? AND provider_account_id = ?',
+    [args.provider, args.providerAccountId]
+  );
+  if (existingLink.length > 0) {
+    const uid = existingLink[0].user_id;
+    await query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [uid]);
+    if (first || last) {
+      await query(
+        `UPDATE users SET
+          first_name = IFNULL(NULLIF(TRIM(first_name), ''), ?),
+          last_name = IFNULL(NULLIF(TRIM(last_name), ''), ?)
+         WHERE id = ? AND (first_name IS NULL OR first_name = '' OR last_name IS NULL OR last_name = '')`,
+        [first || null, last || null, uid]
+      );
+    }
+    return getUserWithRoles(uid);
+  }
+
+  const withEmail = await query<{ id: number; first_name: string | null; last_name: string | null }>(
+    'SELECT id, first_name, last_name FROM users WHERE email = ?',
+    [email]
+  );
+  if (withEmail.length > 0) {
+    const uid = withEmail[0].id;
+    const connection = await getConnection();
+    try {
+      await connection.execute(
+        'INSERT IGNORE INTO oauth_accounts (user_id, provider, provider_account_id) VALUES (?, ?, ?)',
+        [uid, args.provider, args.providerAccountId]
+      );
+    } finally {
+      connection.release();
+    }
+    await query('UPDATE users SET last_login_at = NOW(), email_verified = TRUE WHERE id = ?', [uid]);
+    if (first || last) {
+      await query(
+        `UPDATE users SET
+          first_name = IFNULL(NULLIF(TRIM(first_name), ''), ?),
+          last_name = IFNULL(NULLIF(TRIM(last_name), ''), ?)
+         WHERE id = ?`,
+        [first || null, last || null, uid]
+      );
+    }
+    return getUserWithRoles(uid);
+  }
+
+  const connection = await getConnection();
+  try {
+    const [ins] = await connection.execute(
+      `INSERT INTO users (email, password_hash, first_name, last_name, email_verified)
+       VALUES (?, NULL, NULLIF(?, ''), NULLIF(?, ''), TRUE)`,
+      [email, first, last]
+    );
+    const insertId = (ins as { insertId: number }).insertId;
+    await connection.execute(
+      `INSERT INTO oauth_accounts (user_id, provider, provider_account_id) VALUES (?, ?, ?)`,
+      [insertId, args.provider, args.providerAccountId]
+    );
+    await connection.execute(
+      `INSERT INTO user_roles (user_id, role_id) SELECT ?, id FROM roles WHERE name = 'user'`,
+      [insertId]
+    );
+    await query('UPDATE users SET last_login_at = NOW() WHERE id = ?', [insertId]);
+  } finally {
+    connection.release();
+  }
+
+  const created = await query<{ id: number }>('SELECT id FROM users WHERE email = ?', [email]);
+  if (!created.length) throw new Error('Failed to create OAuth user');
+  return getUserWithRoles(created[0].id);
 }
