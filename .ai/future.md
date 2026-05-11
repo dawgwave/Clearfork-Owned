@@ -1,8 +1,21 @@
 ---------------------------------------------------------------
 
+- (in progress) Sign in with Google / — alternative to email+password register; first sign-in can create/link the user without a separate “sign up” form; keep email/password and social on the same /login screen
+
+problem - Your branding is not being shown to users.
+
+The website of your home page URL "https://clearforkinsurance.com/" is not registered to you.
+
+
+
+support email on site: clearfork@sig4you.com
+email on google workspace (and google cloud) account  is david@protectdfw.com - <<<<-- THIS IS THE ONE WE NEED TO USE
+
+but simply switching support email won't fix it, we may have to add a property on DNS record and then duplicate it on google cloud
+
+- (todo) Apple (OAuth)
 - (todo) connect protectdfw gmail account, create app password and set .env.local and .env.production values
 - (todo) implement email verification during user registration
-- (in progress) Sign in with Google / Apple (OAuth) — alternative to email+password register; first sign-in can create/link the user without a separate “sign up” form; keep email/password and social on the same /login screen
 
 - (todo) rv quote submission broken   
 

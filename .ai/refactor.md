@@ -42,3 +42,19 @@ deployed to test server.
 5. (done) vlog and podcast management pages
 
 6. (done) test server setup and eventual deconstruction - will move to Dave's new server
+
+7. (done)
+
+Visitors can sign in with their Google account on the login and registration screens (alongside email/password where offered).
+
+First-time Google sign-in can create an account automatically so users don’t have to fill out a separate signup form for Google.
+
+If someone already has an account with the same email, Google sign-in can be connected to that existing profile where applicable.
+
+Signing out fully logs them out of the Google-based session as well as the normal site login.
+
+Setup notes for your team were documented so Google login works on both local testing and the live website, using one Google app configuration.
+
+Verified site on ggogle analytics
+
+Verified site on google cloud console

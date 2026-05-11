@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: "Sign in to your Clearfork Insurance account to access personalized features.",
 };
 
+/** OAuth flags come from runtime env (Docker `env_file`); build-time prerender has no `GOOGLE_*` → buttons hidden. */
+export const dynamic = "force-dynamic";
+
 function oauthFlags() {
   return {
     google:
