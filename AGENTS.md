@@ -18,6 +18,14 @@ Create `.env.local` with:
 JWT_SECRET=                 # Secret key for JWT token generation (required)
 JWT_EXPIRES_IN=7d          # JWT token expiration time
 
+# OAuth (Sign in with Google / Apple via NextAuth — optional; omit to hide buttons)
+NEXTAUTH_URL=http://localhost:3000   # Production: https://clearforkinsurance.com (must match public URL)
+NEXTAUTH_SECRET=                     # Random secret for NextAuth JWT (required if using OAuth)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+APPLE_ID=                            # Apple Services ID (Sign in with Apple)
+APPLE_SECRET=                        # Client secret JWT from Apple (see Apple developer docs)
+
 # Database Configuration (MySQL)
 DB_HOST=localhost
 DB_PORT=3306

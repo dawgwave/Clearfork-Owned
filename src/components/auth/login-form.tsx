@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+import { OauthSignInButtons } from "@/components/auth/oauth-sign-in-buttons";
 
 interface LoginFormData {
   email: string;
@@ -20,9 +21,16 @@ interface LoginFormData {
 interface LoginFormProps {
   onSuccess?: (user: any) => void;
   redirectTo?: string;
+  oauthGoogle?: boolean;
+  oauthApple?: boolean;
 }
 
-export function LoginForm({ onSuccess, redirectTo = "/" }: LoginFormProps) {
+export function LoginForm({
+  onSuccess,
+  redirectTo = "/",
+  oauthGoogle = false,
+  oauthApple = false,
+}: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -140,6 +148,14 @@ export function LoginForm({ onSuccess, redirectTo = "/" }: LoginFormProps) {
               "Sign In"
             )}
           </Button>
+          <OauthSignInButtons
+            showGoogle={oauthGoogle}
+            showApple={oauthApple}
+            callbackUrl={redirectTo}
+            mode="signin"
+            disabled={isLoading}
+            className="w-full"
+          />
           <div className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
             <Link href="/register" className="underline hover:text-primary">

@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/auth-provider";
+import { OauthSignInButtons } from "@/components/auth/oauth-sign-in-buttons";
 
 interface RegisterFormData {
   email: string;
@@ -24,9 +25,16 @@ interface RegisterFormData {
 interface RegisterFormProps {
   onSuccess?: (user: any) => void;
   redirectTo?: string;
+  oauthGoogle?: boolean;
+  oauthApple?: boolean;
 }
 
-export function RegisterForm({ onSuccess, redirectTo = "/" }: RegisterFormProps) {
+export function RegisterForm({
+  onSuccess,
+  redirectTo = "/",
+  oauthGoogle = false,
+  oauthApple = false,
+}: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -247,6 +255,14 @@ export function RegisterForm({ onSuccess, redirectTo = "/" }: RegisterFormProps)
               "Create Account"
             )}
           </Button>
+          <OauthSignInButtons
+            showGoogle={oauthGoogle}
+            showApple={oauthApple}
+            callbackUrl={redirectTo}
+            mode="signup"
+            disabled={isLoading}
+            className="w-full"
+          />
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" className="underline hover:text-primary">

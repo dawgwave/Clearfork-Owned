@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 import { verifyToken, getUserById, hasPermission, hasRole, type UserWithRoles } from './auth';
 
 export interface AuthenticatedRequest extends NextRequest {
@@ -22,18 +23,22 @@ export async function getUserFromRequest(request: NextRequest): Promise<UserWith
     token = request.cookies.get('auth-token')?.value || null;
   }
 
-  if (!token) {
-    return null;
+  if (token) {
+    const payload = verifyToken(token);
+    if (payload && payload.userId) {
+      return await getUserById(payload.userId);
+    }
   }
 
-  // Verify token
-  const payload = verifyToken(token);
-  if (!payload || !payload.userId) {
-    return null;
+  const nextSecret = process.env.NEXTAUTH_SECRET;
+  if (nextSecret) {
+    const nextToken = await getToken({ req: request, secret: nextSecret });
+    if (nextToken && typeof nextToken.appUserId === 'number') {
+      return await getUserById(nextToken.appUserId);
+    }
   }
 
-  // Get user with roles
-  return await getUserById(payload.userId);
+  return null;
 }
 
 /**

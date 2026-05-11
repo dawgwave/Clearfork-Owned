@@ -5,7 +5,7 @@ import "./globals.css";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/components/auth/auth-provider";
+import { AppProviders } from "@/components/auth/app-providers";
 import { insuranceAgencySchema } from "@/lib/schema";
 import { isRecaptchaSiteKeyConfigured } from "@/lib/recaptcha";
 
@@ -95,12 +95,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
-        <AuthProvider>
+        <AppProviders>
           <Header />
           <main className="flex-1">{children}</main>
           <Footer />
           <Toaster />
-        </AuthProvider>
+        </AppProviders>
         {isRecaptchaSiteKeyConfigured() && (
           <Script
             src={`https://www.google.com/recaptcha/api.js?render=${RECAPTCHA_SITE_KEY}`}

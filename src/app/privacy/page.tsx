@@ -5,7 +5,7 @@ import { breadcrumbSchema } from "@/lib/schema";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "Privacy policy for SIG Clearfork Insurance Group — how we collect, use, disclose, and protect your personal information.",
+    "Privacy policy for SIG Clearfork Insurance Group (United States): how we collect, use, disclose, and protect your personal information.",
   alternates: { canonical: "https://clearforkinsurance.com/privacy" },
 };
 
@@ -31,8 +31,12 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="text-muted-foreground">
-            Effective Date: January 1, 2025 &middot; Last Updated: April 7,
-            2026
+            Effective date: January 1, 2025 · Last updated: May 8, 2026
+          </p>
+          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            This policy applies to visitors and customers located in the United States who use our website,
+            contact us, or obtain quotes or insurance services through SIG Clearfork Insurance Group. We do
+            not intend this Site for users outside the U.S.
           </p>
         </div>
       </section>
@@ -41,31 +45,29 @@ export default function PrivacyPage() {
         <div className="mx-auto max-w-4xl px-6">
           <div className="prose max-w-none">
             <p>
-              SIG Clearfork Insurance Group (&ldquo;Clearfork
-              Insurance,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or
-              &ldquo;our&rdquo;) is committed to protecting the privacy and
-              security of your personal information. This Privacy Policy
-              describes how we collect, use, disclose, and safeguard
-              information when you visit our website at{" "}
-              <a href="https://clearforkinsurance.com">
-                clearforkinsurance.com
-              </a>{" "}
-              (the &ldquo;Site&rdquo;), contact us, or use our services.
+              SIG Clearfork Insurance Group (&ldquo;Clearfork Insurance,&rdquo;
+              &ldquo;we,&rdquo; &ldquo;us,&rdquo; or &ldquo;our&rdquo;) is committed to protecting the
+              privacy and security of your personal information. This Privacy Policy describes how we
+              collect, use, disclose, and safeguard information when you visit our website at{" "}
+              <a href="https://clearforkinsurance.com">clearforkinsurance.com</a> (&ldquo;Site&rdquo;),
+              contact us, create an account, or obtain quotes or insurance services.
             </p>
             <p>
-              By accessing or using our Site, you agree to the terms of this
-              Privacy Policy. If you do not agree, please do not use the Site.
+              By accessing or using our Site, you agree to this Privacy Policy. If you do not agree,
+              please do not use the Site.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              This notice is provided for general information and does not modify any rights or obligations
+              under your insurance contracts or notices you receive directly from insurance carriers.
             </p>
 
-            <h2>1. Information We Collect</h2>
-            <h3>Personal Information You Provide</h3>
-            <p>
-              We collect personal information that you voluntarily provide when
-              you:
-            </p>
+            <h2>1. Information we collect</h2>
+            <h3>Personal information you provide</h3>
+            <p>We collect personal information that you voluntarily provide when you:</p>
             <ul>
               <li>Request an insurance quote</li>
               <li>Complete a contact or inquiry form</li>
+              <li>Create or sign in to an account (including optional sign-in through Google or Apple)</li>
               <li>Call, email, or chat with us</li>
               <li>Subscribe to our blog or newsletter</li>
               <li>Apply for or manage an insurance policy</li>
@@ -73,146 +75,133 @@ export default function PrivacyPage() {
             <p>This information may include:</p>
             <ul>
               <li>
-                Full name, date of birth, and Social Security number (when
-                required for underwriting)
+                Full name, date of birth, and Social Security number when required for underwriting or
+                verification
               </li>
               <li>Home address and mailing address</li>
               <li>Email address and telephone number</li>
-              <li>
-                Driver&apos;s license number and vehicle information
-              </li>
-              <li>
-                Property details (address, square footage, year built, etc.)
-              </li>
+              <li>Driver&apos;s license number and vehicle information</li>
+              <li>Property details (address, square footage, year built, etc.)</li>
               <li>Business information (EIN, business type, payroll, etc.)</li>
-              <li>
-                Financial information necessary for insurance underwriting
-              </li>
-              <li>Claims history and insurance coverage preferences</li>
+              <li>Financial information necessary for insurance underwriting</li>
+              <li>Claims history and coverage preferences</li>
             </ul>
 
-            <h3>Information Collected Automatically</h3>
-            <p>
-              When you visit our Site, we may automatically collect certain
-              information, including:
-            </p>
+            <h3>Information collected automatically</h3>
+            <p>When you visit our Site, we may automatically collect:</p>
             <ul>
-              <li>
-                IP address, browser type, operating system, and device
-                information
-              </li>
+              <li>IP address, browser type, operating system, and device information</li>
               <li>Pages visited, time spent on pages, and referring URLs</li>
-              <li>
-                Cookies and similar tracking technologies (see Section 6
-                below)
-              </li>
+              <li>Cookies and similar technologies (see Section 6)</li>
             </ul>
 
-            <h2>2. How We Use Your Information</h2>
-            <p>
-              We use the information we collect for the following purposes:
-            </p>
+            <h2>2. How we use your information</h2>
+            <p>We use the information we collect to:</p>
             <ul>
               <li>
-                <strong>Provide Insurance Services:</strong> Process quote
-                requests, bind policies, manage renewals, and handle claims
+                <strong>Provide insurance services:</strong> process quotes, place coverage, manage
+                renewals, and assist with claims
               </li>
               <li>
-                <strong>Communicate With You:</strong> Respond to inquiries,
-                send policy documents, and provide customer support
+                <strong>Communicate with you:</strong> respond to inquiries, send documents, and provide
+                support
               </li>
               <li>
-                <strong>Improve Our Services:</strong> Analyze website usage
-                to enhance user experience and service offerings
+                <strong>Operate accounts:</strong> authenticate users and maintain secure sessions
               </li>
               <li>
-                <strong>Compliance:</strong> Comply with applicable laws,
-                regulations, and insurance industry requirements
+                <strong>Improve our services:</strong> analyze Site usage and enhance content and tools
               </li>
               <li>
-                <strong>Marketing:</strong> Send information about products,
-                services, and promotions that may interest you (you may opt
-                out at any time)
+                <strong>Compliance:</strong> meet applicable federal and state laws and insurance industry
+                requirements
               </li>
               <li>
-                <strong>Security:</strong> Detect, prevent, and address fraud,
-                unauthorized access, and other illegal activities
+                <strong>Marketing:</strong> send information about products or services that may interest you
+                (you may opt out as described below)
+              </li>
+              <li>
+                <strong>Security:</strong> detect fraud, abuse, unauthorized access, or illegal activity
               </li>
             </ul>
 
-            <h2>3. How We Share Your Information</h2>
+            <h2>3. How we share your information</h2>
             <p>
-              We do not sell, rent, or trade your personal information to third
-              parties for their marketing purposes. We may share your
-              information with:
+              We do <strong>not</strong> sell your personal information for money. We do{" "}
+              <strong>not</strong> share personal information for cross-context behavioral advertising as a
+              “sale” under applicable state privacy laws, except as described here or as permitted by law.
             </p>
+            <p>We may share information with:</p>
             <ul>
               <li>
-                <strong>Insurance Carriers and Underwriters:</strong> To
-                obtain quotes, bind coverage, and process claims on your
-                behalf
+                <strong>Insurance carriers and underwriters:</strong> to obtain quotes, bind coverage, and
+                service policies and claims
               </li>
               <li>
-                <strong>Service Providers:</strong> Third-party vendors who
-                assist us with website hosting, data analytics, email
-                delivery, and other business operations, subject to
-                confidentiality agreements
+                <strong>Service providers:</strong> vendors who host our Site, send email, provide
+                analytics, or support operations under confidentiality and contractual safeguards
               </li>
               <li>
-                <strong>Legal and Regulatory Authorities:</strong> When
-                required by law, court order, or government regulation, or to
-                protect our legal rights
+                <strong>Authentication providers:</strong> when you choose Google or Apple sign-in, those
+                providers process login according to their respective privacy policies
               </li>
               <li>
-                <strong>Business Transfers:</strong> In connection with a
-                merger, acquisition, or sale of assets, your information may
-                be transferred as part of that transaction
+                <strong>Legal and regulatory authorities:</strong> when required by law, subpoena, or
+                regulation, or to protect rights and safety
+              </li>
+              <li>
+                <strong>Business transfers:</strong> in a merger, acquisition, or asset sale, subject to
+                applicable legal requirements
               </li>
             </ul>
 
-            <h2>4. Data Security</h2>
+            <h2>4. Insurance-related information (GLBA)</h2>
             <p>
-              We implement reasonable administrative, technical, and physical
-              safeguards to protect your personal information from
-              unauthorized access, use, alteration, or disclosure. These
-              measures include encrypted data transmission (SSL/TLS), secure
-              server infrastructure, access controls, and employee training.
-            </p>
-            <p>
-              However, no method of electronic transmission or storage is 100%
-              secure. While we strive to protect your information, we cannot
-              guarantee its absolute security.
+              Certain personal information we collect in connection with insurance products or services may be
+              treated as nonpublic personal information under the federal Gramm-Leach-Bliley Act (GLBA) and
+              related state insurance privacy laws. Where GLBA applies, we limit collection, use, and
+              disclosure as described in this policy and in any separate privacy notices required by your
+              insurer or applicable law.
             </p>
 
-            <h2>5. Data Retention</h2>
+            <h2>5. Data security</h2>
             <p>
-              We retain your personal information for as long as necessary to
-              fulfill the purposes described in this Privacy Policy, comply
-              with legal obligations, resolve disputes, and enforce our
-              agreements. Insurance records may be retained for the duration
-              required by applicable state and federal regulations.
+              We use reasonable administrative, technical, and physical safeguards designed to protect
+              personal information, including encrypted transmission (HTTPS), access controls, and secure
+              hosting practices.
+            </p>
+            <p>
+              No electronic transmission or storage is completely secure. We cannot guarantee absolute
+              security.
             </p>
 
-            <h2>6. Cookies and Tracking Technologies</h2>
-            <p>Our Site uses cookies and similar technologies to:</p>
+            <h2>6. Data retention</h2>
+            <p>
+              We retain personal information as long as needed for the purposes above, to comply with legal
+              obligations, resolve disputes, and enforce agreements. Insurance and claims records may be
+              retained as required by applicable state and federal rules.
+            </p>
+
+            <h2>7. Cookies, analytics, and marketing tags</h2>
+            <p>Our Site may use cookies and similar technologies to:</p>
             <ul>
-              <li>Remember your preferences and settings</li>
+              <li>Maintain preferences and session functionality</li>
               <li>
-                Analyze website traffic and usage patterns (via Google
-                Analytics)
+                Measure Site traffic and engagement through Google Analytics when configured (you may use
+                browser controls or Google&apos;s opt-out tools)
               </li>
-              <li>Prevent spam and bot activity (via Google reCAPTCHA)</li>
+              <li>
+                Load Google Tag Manager to deploy and manage analytics or marketing tags in accordance with
+                our configuration and Google&apos;s policies
+              </li>
+              <li>Reduce spam and automated abuse through Google reCAPTCHA when enabled</li>
             </ul>
             <p>
-              You can control cookies through your browser settings. Disabling
-              cookies may limit certain features of our Site.
+              You can control cookies through browser settings; disabling cookies may limit some features.
             </p>
             <h3>Google Analytics</h3>
             <p>
-              We use Google Analytics to understand how visitors interact with
-              our Site. Google Analytics collects information anonymously and
-              reports website trends without identifying individual visitors.
-              You can opt out of Google Analytics by installing the{" "}
+              Google Analytics helps us understand aggregated Site usage. You may install the{" "}
               <a
                 href="https://tools.google.com/dlpage/gaoptout"
                 target="_blank"
@@ -224,110 +213,83 @@ export default function PrivacyPage() {
             </p>
             <h3>Google reCAPTCHA</h3>
             <p>
-              Our forms use Google reCAPTCHA to prevent spam submissions. This
-              service may collect hardware and software information, such as
-              device and application data, and send it to Google for analysis.
-              Use of reCAPTCHA is subject to Google&apos;s{" "}
-              <a
-                href="https://policies.google.com/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              When enabled, reCAPTCHA may collect device and interaction data sent to Google for analysis.
+              Use is subject to Google&apos;s{" "}
+              <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
                 Privacy Policy
               </a>{" "}
               and{" "}
-              <a
-                href="https://policies.google.com/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+              <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">
                 Terms of Service
               </a>
               .
             </p>
 
-            <h2>7. Your Rights and Choices</h2>
-            <p>Depending on your location, you may have the right to:</p>
+            <h2>8. U.S. state privacy rights</h2>
+            <p>
+              Depending on where you live, state laws (including California, Colorado, Connecticut, Virginia,
+              Utah, Texas, and others) may grant you rights regarding your personal information, such as:
+            </p>
             <ul>
-              <li>
-                <strong>Access:</strong> Request a copy of the personal
-                information we hold about you
-              </li>
-              <li>
-                <strong>Correction:</strong> Request that we correct
-                inaccurate or incomplete information
-              </li>
-              <li>
-                <strong>Deletion:</strong> Request that we delete your
-                personal information, subject to legal and contractual
-                retention requirements
-              </li>
-              <li>
-                <strong>Opt-Out:</strong> Unsubscribe from marketing
-                communications at any time by clicking the
-                &ldquo;unsubscribe&rdquo; link in our emails or contacting us
-                directly
-              </li>
+              <li>Right to know what categories or specific pieces we collect, use, or disclose</li>
+              <li>Right to request deletion, subject to legal exceptions</li>
+              <li>Right to correct inaccurate information</li>
+              <li>Right to opt out of certain processing (for example, sale, sharing, or targeted
+                advertising where those terms apply)</li>
+              <li>Right to appeal our response to your request under some state laws</li>
+              <li>Right not to receive discriminatory treatment for exercising privacy rights</li>
             </ul>
             <p>
-              To exercise any of these rights, please contact us using the
-              information in Section 10.
+              <strong>California residents:</strong> Under the California Consumer Privacy Act as amended
+              (CPRA), you may submit requests as described below. We will verify your request consistent with
+              applicable law. You may designate an authorized agent in writing where permitted.
+            </p>
+            <p>
+              To exercise rights, contact us using Section 11. Include your name, contact information, and a
+              description of your request. We may need additional information to verify your identity before
+              responding.
             </p>
 
-            <h2>8. Third-Party Links</h2>
+            <h2>9. Third-party links</h2>
             <p>
-              Our Site may contain links to third-party websites, including
-              insurance carrier portals, social media platforms, and other
-              resources. We are not responsible for the privacy practices or
-              content of these external sites. We encourage you to review the
-              privacy policies of any third-party site you visit.
+              Our Site may link to carrier portals, social networks, or other sites we do not control. Their
+              privacy practices govern those sites. Review their policies before providing information.
             </p>
 
-            <h2>9. Children&apos;s Privacy</h2>
+            <h2>10. Children&apos;s privacy</h2>
             <p>
-              Our Site is not intended for children under the age of 13. We do
-              not knowingly collect personal information from children under
-              13. If we learn that we have collected information from a child
-              under 13, we will take steps to delete it promptly. If you
-              believe a child has provided us with personal information,
-              please contact us.
+              Our Site is not directed to children under 13. We do not knowingly collect personal information
+              from children under 13. If you believe we have collected such information, contact us and we will
+              take appropriate steps to delete it.
             </p>
 
-            <h2>10. Contact Us</h2>
-            <p>
-              If you have any questions, concerns, or requests regarding this
-              Privacy Policy or our data practices, please contact us:
-            </p>
+            <h2>11. Contact us</h2>
+            <p>Questions about this Privacy Policy or our privacy practices:</p>
             <ul>
               <li>
                 <strong>SIG Clearfork Insurance Group</strong>
               </li>
               <li>992 Winscott Rd, Suite B, Benbrook, TX 76126</li>
               <li>
-                Phone:{" "}
-                <a href="tel:8172498683">(817) 249-8683</a>
+                Phone: <a href="tel:8172498683">(817) 249-8683</a>
               </li>
               <li>
                 Email:{" "}
-                <a href="mailto:clearfork@sig4you.com">
-                  clearfork@sig4you.com
-                </a>
+                <a href="mailto:clearfork@sig4you.com">clearfork@sig4you.com</a>
               </li>
             </ul>
 
-            <h2>11. Changes to This Privacy Policy</h2>
+            <h2>12. Changes to this Privacy Policy</h2>
             <p>
-              We may update this Privacy Policy from time to time to reflect
-              changes in our practices, technology, legal requirements, or
-              other factors. When we make material changes, we will update the
-              &ldquo;Last Updated&rdquo; date at the top of this page. We
-              encourage you to review this Privacy Policy periodically.
+              We may update this Privacy Policy from time to time. When we make material changes, we will post
+              the updated policy on this page and revise the &ldquo;Last updated&rdquo; date. Your continued
+              use of the Site after updates constitutes acceptance of the revised policy to the extent
+              permitted by law.
             </p>
 
             <hr />
             <p className="text-sm text-muted-foreground">
-              &copy; {new Date().getFullYear()} SIG Clearfork Insurance
-              Group. All rights reserved.
+              &copy; {new Date().getFullYear()} SIG Clearfork Insurance Group. All rights reserved.
             </p>
           </div>
         </div>
